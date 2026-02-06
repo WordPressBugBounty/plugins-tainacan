@@ -1,30 +1,66 @@
 <?php
 
 namespace Tainacan;
-use Tainacan\Repositories\Repository;
 
+defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
+
+/**
+ * Manages roles and capabilities for the Tainacan plugin.
+ *
+ * Handles the creation, management, and enforcement of custom roles and capabilities
+ * specific to Tainacan functionality, including collection and item permissions.
+ *
+ * @since 0.1.0
+ */
 class Roles {
-
-	private static $instance = null;
-	private $capabilities = array();
-	private $meta_caps;
-	private $meta_section_caps;
-	private $filters_caps;
-
-	public static function get_instance()
-	{
-		if(!isset(self::$instance))
-		{
-			self::$instance = new self();
-		}
-
-		return self::$instance;
-	}
+	use \Tainacan\Traits\Singleton_Instance;
 
 	/**
-	*
-	*/
-	private function __construct() {
+	 * Array of Tainacan capabilities.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @var array
+	 */
+	private $capabilities = array();
+
+	/**
+	 * Metadata capabilities.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @var array
+	 */
+	private $meta_caps;
+
+	/**
+	 * Metadata section capabilities.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @var array
+	 */
+	private $meta_section_caps;
+
+	/**
+	 * Filter capabilities.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @var array
+	 */
+	private $filters_caps;
+
+	/**
+	 * Initializes the roles and capabilities system.
+	 *
+	 * Sets up WordPress hooks for capability management and user role translation.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @return void
+	 */
+	private function init() {
 		$this->meta_caps = (new \Tainacan\Entities\Metadatum())->get_capabilities();
 		$this->meta_section_caps = (new \Tainacan\Entities\Metadata_Section())->get_capabilities();
 		$this->filters_caps = (new \Tainacan\Entities\Filter())->get_capabilities();
@@ -43,6 +79,16 @@ class Roles {
 
 	}
 
+	/**
+	 * Populates the Tainacan capabilities array.
+	 *
+	 * Defines all custom capabilities used by Tainacan for managing
+	 * collections, items, metadata, and other features.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @return void
+	 */
 	public function populate_tainacan_capabilities() {
 
 		$this->capabilities = [
@@ -519,7 +565,7 @@ class Roles {
 	}
 
 	/**
-	 * Callback to gettext_with_context hook to translate custom ueser roles.
+	 * Callback to gettext_with_context hook to translate custom user roles.
 	 *
 	 * Since user roles are stored in the database, we have to translate them on the fly
 	 * using translate_user_role() function.
@@ -527,17 +573,24 @@ class Roles {
 	 * @see https://wordpress.stackexchange.com/questions/141551/how-to-auto-translate-custom-user-roles
 	 */
 	public function translate_user_roles( $translations, $text, $context, $domain ) {
-
-		$plugin_domain = 'tainacan';
-
-		$roles_names = array_map(function($role) {
-			return $role['display_name'];
-		}, $this->get_tainacan_roles());
-
-		if ( $context === 'User role' && in_array( $text, $roles_names ) && $domain !== $plugin_domain ) {
-			return translate_with_gettext_context( $text, $context, $plugin_domain );
+    
+		// Early return - only process User role context from non-tainacan domains
+		if ( $context !== 'User role' || $domain === 'tainacan' ) {
+			return $translations;
 		}
-
+	
+		// Lazy load roles names only when needed
+		static $roles_names = null;
+		if ( $roles_names === null ) {
+			$roles_names = array_map(function($role) {
+				return $role['display_name'];
+			}, $this->get_tainacan_roles());
+		}
+	
+		if ( in_array( $text, $roles_names, true ) ) {
+			return translate_user_role( $text, 'tainacan' );
+		}
+		
 		return $translations;
 	}
 

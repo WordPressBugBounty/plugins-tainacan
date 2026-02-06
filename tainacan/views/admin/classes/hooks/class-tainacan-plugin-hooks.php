@@ -8,28 +8,17 @@ defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
  * Class Plugins_Hooks
  */
 class Plugin_Hooks {
+	use \Tainacan\Traits\Singleton_Instance;
 
-	private static $instance = null;
 	/**
 	 * Stores external vue plugin available to be used in Tainacan
 	 */
 	private $registered_plugin;
 
-	public static function get_instance() {
-		if ( ! isset( self::$instance ) ) {
-			self::$instance = new self();
-		}
-
-		return self::$instance;
-	}
-
-	private function __construct() {
-		$this->registered_plugin = [];
-		$this->init();
-	}
-
 	private function init() {
-		// the priority should see less than on function
+		$this->registered_plugin = [];
+
+		// The priority should see less than on function
 		// `load_admin_page()` of class `Admin` in file /src/views/class-tainacan-admin.php
 		add_action( 'admin_enqueue_scripts', array( &$this, 'register_plugin' ), 80 );
 		do_action('tainacan-register-vuejs-plugin', $this);
@@ -37,7 +26,13 @@ class Plugin_Hooks {
 
 	public function register_plugin() {
 		foreach($this->registered_plugin as $handle => $plugin) {
-			wp_enqueue_script($handle, $plugin['script_path']);
+			wp_enqueue_script(
+				$handle, 
+				$plugin['script_path'], 
+				array(), 
+				TAINACAN_VERSION,
+				true
+			);
 		}
 	}
 

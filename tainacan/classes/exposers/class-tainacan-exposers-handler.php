@@ -1,10 +1,9 @@
 <?php
 namespace Tainacan;
 
-use Tainacan\Mappers_Handler;
-use Tainacan\Mappers\Mapper;
-
 defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
+
+use Tainacan\Mappers_Handler;
 
 /**
  * Load exposers classes
@@ -15,7 +14,6 @@ class Exposers_Handler {
 	
 	private static $instance = null;
 	private static $request = null;
-	
 	
 	const TYPE_PARAM = 'exposer';
 	
@@ -148,7 +146,7 @@ class Exposers_Handler {
 					$type_responde = $exposer->rest_request_after_callbacks($response, $handler, $request);
 					if(self::request_has_url_param($request)) {
 						header(implode('', $response->get_headers()));
-						echo wp_kses_tainacan(stripcslashes($response->get_data()));
+						echo wp_kses(stripcslashes($response->get_data()), wp_kses_allowed_html('tainacan_content'));
 						exit();
 					}
 					return $type_responde;

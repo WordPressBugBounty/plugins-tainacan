@@ -2,15 +2,20 @@
 
 namespace Tainacan\API\EndPoints;
 
+defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
+
 use \Tainacan\API\REST_Controller;
 use Tainacan\Repositories;
 use Tainacan\Entities;
 
 /**
- * Represents the Items REST Controller
- * @uses Tainacan\Repositories\
- * @uses Tainacan\Entities\
-*/
+ * REST API controller for managing Tainacan items.
+ *
+ * Handles all REST API endpoints for item operations including
+ * creation, updates, deletion, and querying of items within collections.
+ *
+ * @since 1.0.0
+ */
 class REST_Items_Controller extends REST_Controller {
 	private $items_repository;
 	private $item;
@@ -1334,7 +1339,7 @@ class REST_Items_Controller extends REST_Controller {
 
 				if ($item->validate()) {
 					$item = $this->items_repository->insert( $item );
-					$fake_id = md5(uniqid(mt_rand(), true));
+					$fake_id = md5(uniqid(wp_rand(), true));
 					$id = $item->get_id();
 					if (set_transient('tnc_transient_submission_' . $fake_id, $id, 300) == true) {
 						set_transient('tnc_transient_submission_' . $fake_id . '_new_terms_ids', $this->new_terms_ids, 300);
@@ -1573,7 +1578,7 @@ class REST_Items_Controller extends REST_Controller {
 	 */
 	public function get_wp_query_params() {
 		$query_params['title'] = array(
-			'description' => __('Limits the result set to items with a specific title'),
+			'description' => __('Limits the result set to items with a specific title', 'tainacan'),
 			'type'        => 'string',
 		);
 

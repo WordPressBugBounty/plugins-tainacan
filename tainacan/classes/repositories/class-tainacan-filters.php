@@ -2,28 +2,26 @@
 
 namespace Tainacan\Repositories;
 
-use Tainacan\Entities;
-
 defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
 
+use Tainacan\Entities;
 use \Respect\Validation\Validator as v;
 
+/**
+ * Repository for managing Tainacan filters.
+ *
+ * Handles all database operations for collection filters including creation,
+ * updates, deletion, and querying with proper validation and logging.
+ *
+ * @since 1.0.0
+ */
 class Filters extends Repository {
+	use \Tainacan\Traits\Singleton_Instance;
+
 	public $entities_type = '\Tainacan\Entities\Filter';
 	public $filters_types = [];
 
-	private static $instance = null;
-
-	public static function get_instance() {
-		if ( ! isset( self::$instance ) ) {
-			self::$instance = new self();
-		}
-
-		return self::$instance;
-	}
-
-	protected function __construct() {
-		parent::__construct();
+	protected function init() {
 		add_action( 'tainacan-deleted-tainacan-metadatum', array( &$this, 'hook_delete_when_metadata_deleted' ), 10, 2 );
 		add_action( 'tainacan-insert-tainacan-metadatum', array( &$this, 'hook_update_when_metadata_saved_as_private' ), 10, 2 );
 	}
@@ -159,8 +157,8 @@ class Filters extends Repository {
 			'labels'              => $labels,
 			'hierarchical'        => true,
 			'public'              => true,
-			'show_ui'             => tnc_enable_dev_wp_interface(),
-			'show_in_menu'        => tnc_enable_dev_wp_interface(),
+			'show_ui'             => tainacan_enable_dev_wp_interface(),
+			'show_in_menu'        => tainacan_enable_dev_wp_interface(),
 			'publicly_queryable'  => true,
 			'exclude_from_search' => true,
 			'has_archive'         => true,
@@ -485,7 +483,7 @@ class Filters extends Repository {
 		} elseif ( is_integer( $collection ) ) {
 			$collection_id = $collection;
 		} else {
-			throw new \InvalidArgumentException( 'fetch_ids_by_collection expects paramater 1 to be a integer or a \Tainacan\Entities\Collection object. ' . gettype( $collection ) . ' given' );
+			throw new \InvalidArgumentException( 'fetch_ids_by_collection expects paramater 1 to be a integer or a \Tainacan\Entities\Collection object. ' . esc_html( gettype( $collection ) ) . ' given' );
 		}
 
 		//get parent collections

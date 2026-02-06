@@ -21,7 +21,7 @@ class Text extends Metadata_Type {
 		$this->set_preview_template('
 			<div>
 				<div class="control is-clearfix">
-					<input type="text" placeholder="' . __('Type here...') . '" class="input"> 
+					<input type="text" placeholder="' . __('Type here...', 'tainacan') . '" class="input"> 
 				</div>
 			</div>
 		');
@@ -39,6 +39,7 @@ class Text extends Metadata_Type {
 			'mask' => [
                 'title' => __( 'Mask input', 'tainacan' ),
                 'description' => sprintf(
+					/* translators: %1$s is the link to the imask.js guide */
 					__( 'Define a pattern of fixed characters that will be used to mask the input. Learn how to build mask patterns <a target="_blank" href="%1$s">here</a>.', 'tainacan' ),
 					'https://imask.js.org/guide.html#masked-pattern'
 				)

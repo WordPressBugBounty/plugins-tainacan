@@ -2,7 +2,14 @@
 
 namespace Tainacan;
 
-class System_Check {
+defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
+
+class System_Check extends Pages {
+	use \Tainacan\Traits\Singleton_Instance;
+
+	protected function get_page_slug() : string {
+        return 'tainacan_systemcheck';
+    }
 
 	private $min_php_version = '7.0';
 
@@ -14,16 +21,28 @@ class System_Check {
 	private $health_check_mysql_rec_version = '5.0';
 	private $health_check_mysql_min_version = '5.0';
 
-	public function __construct() {
-		$this->init();
-	}
-
 	public function init() {
-		$this->prepare_sql_data();
+		parent::init();
 	}
 
-	public function admin_page() {
-		include('admin-page.php');
+	public function add_admin_menu() {
+
+		if ( !$this->has_admin_ui_option('hideNavigationSystemCheckButton') ) {
+			$system_check_page_suffix = add_submenu_page(
+				!$this->has_admin_ui_option('hideNavigationOtherMenu') ? $this->tainacan_other_links_slug : $this->tainacan_root_menu_slug,
+				__('System check', 'tainacan'),
+				'<span class="icon" aria-hidden="true">' . $this->get_svg_icon( 'finish' ) . '</span><span class="menu-text">' .__( 'System check', 'tainacan' ) . '</span>',
+				'manage_options',
+				$this->get_page_slug(),
+				array( &$this, 'render_page' )
+			);
+			add_action( 'load-' . $system_check_page_suffix, array( &$this, 'load_page' ) );
+		}
+	}
+
+	public function render_page_content() {
+		$this->prepare_sql_data();
+		require_once('page.php');
 	}
 
 	public function test_php_version() {
@@ -48,13 +67,9 @@ class System_Check {
 		global $wpdb;
 
 		if ( method_exists( $wpdb, 'db_version' ) ) {
-			if ( $wpdb->use_mysqli ) {
-				// phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysqli_get_server_info
-				$mysql_server_type = mysqli_get_server_info( $wpdb->dbh );
-			} else {
-				// phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysql_get_server_info
-				$mysql_server_type = mysql_get_server_info( $wpdb->dbh );
-			}
+			
+			// phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysqli_get_server_info
+			$mysql_server_type = mysqli_get_server_info( $wpdb->dbh );
 
 			$this->mysql_server_version = $wpdb->get_var( 'SELECT VERSION()' );
 		}
@@ -73,21 +88,20 @@ class System_Check {
 
 		$settings = get_option( 'permalink_structure' );
 
+		$class = 'good';
+		$text = 'Ok';
+
 		if ( empty($settings) ) {
 			$class = 'error';
 			$text =  sprintf(
+				/* translators: %1$s is the link to the permalink settings page, %2$s is the closing link tag */
 				__('Tainacan requires your Permalink settings to be configured. Please visit %1$sPermalink settings%2$s and configure it.', 'tainacan'),
 				'<a href="'.admin_url('options-permalink.php').'">',
 				'</a>'
 			);
-		} else {
-
-			$class = 'good';
-			$text = 'Ok';
-
 		}
 
-		printf( '<span class="%1$s"></span> %2$s', esc_attr( $class ), $text );
+		printf( '<span class="%1$s"></span> %2$s', esc_attr( $class ), wp_kses_post( $text ) );
 
 	}
 
@@ -100,24 +114,27 @@ class System_Check {
 		if ( $time < $min ) {
 			$class = 'error';
 			$text =  sprintf(
+				/* translators: %s is the current value of the maximum execution time */
 				__('Your current configuration is %ds. This is too little. Please increase it to at least 30s', 'tainacan'),
 				$time
 			);
 		} elseif ( $time < $rec ) {
 			$class = 'warning';
 			$text =  sprintf(
+				/* translators: %s is the current value of the maximum execution time */
 				__('Your current configuration is %d seconds. This is fine, but you should consider increase it to at least 240 seconds if possible', 'tainacan'),
 				$time
 			);
 		} else {
 			$class = 'good';
 			$text =  sprintf(
+				/* translators: %s is the current value of the maximum execution time */
 				__('Your current configuration is %ds. This is excellent.', 'tainacan'),
 				$time
 			);
 		}
 
-		printf( '<span class="%1$s"></span> %2$s', esc_attr( $class ), $text );
+		printf( '<span class="%1$s"></span> %2$s', esc_attr( $class ), wp_kses_post( $text ) );
 
 	}
 
@@ -138,13 +155,13 @@ class System_Check {
 			);
 		}
 
-		printf( '<span class="%1$s"></span> %2$s', esc_attr( $class ), $text );
+		printf( '<span class="%1$s"></span> %2$s', esc_attr( $class ), wp_kses_post( $text ) );
 
 	}
 
 	public function check_max_upload_size() {
 		$upload_max_size = ini_get('upload_max_filesize');
-		echo $upload_max_size;
+		echo esc_html($upload_max_size);
 	}
 
 
@@ -166,15 +183,16 @@ class System_Check {
 
 			$class = 'error';
 			$text =  sprintf(
-				__('Tainacan requires WordPress 5.9 or newer! Your version is %s. Please upgrade.'),
+				/* translators: %s is the current version of WordPress */
+				__('Tainacan requires WordPress 5.9 or newer! Your version is %s. Please upgrade.', 'tainacan'),
 				$core_current_version
 			);
 
 		} elseif ( ! is_array( $core_updates ) ) {
 			$class = 'warning';
 			$text  = sprintf(
-				// translators: %s: Your current version of WordPress.
-				__( '%s - We were unable to check if any new versions are available.', 'health-check' ),
+				/* translators: %s is the current version of WordPress */
+				__( '%s - We were unable to check if any new versions are available.', 'tainacan' ),
 				$core_current_version
 			);
 		} else {
@@ -349,7 +367,7 @@ class System_Check {
 					sprintf(
 						// translators: %1$2: If a module is required or recommended. %2$s: The module name.
 						__( 'The %1$s module %2$s is not installed, or has been disabled.', 'tainacan' ),
-						( $module['required'] ? __( 'required', 'health-check' ) : __( 'optional', 'health-check' ) ),
+						( $module['required'] ? __( 'required', 'tainacan' ) : __( 'optional', 'tainacan' ) ),
 						$library
 					)
 				);
@@ -365,7 +383,7 @@ class System_Check {
 			foreach ( $failures as $failure ) {
 				printf(
 					'<li>%s</li>',
-					$failure
+					wp_kses_post($failure)
 				);
 			}
 
@@ -373,7 +391,7 @@ class System_Check {
 		} else {
 			printf(
 				'<span class="good"></span> %s',
-				__( 'All required and recommended modules are installed.', 'health-check' )
+				esc_html( 'All required and recommended modules are installed.', 'tainacan' )
 			);
 		}
 	}
@@ -405,27 +423,29 @@ class System_Check {
 		}
 
 		if ( $db_dropin ) {
-			// translators: %s: The database engine in use (MySQL or MariaDB).
-			$notice[] = wp_kses(
-				sprintf(
-					// translators: %s: The name of the database engine being used.
+			$notice[] = sprintf(
+				wp_kses(
+				/* translators: %s: The name of the database engine being used. */
 					__( 'You are using a <code>wp-content/db.php</code> drop-in which might mean that a %s database is not being used.', 'tainacan' ),
-					( $this->mariadb ? 'MariaDB' : 'MySQL' )
+					array(
+						'code' => true,
+					)
 				),
-				array(
-					'code' => true,
-				)
+				( $this->mariadb ? 'MariaDB' : 'MySQL' )
 			);
 		}
+
+		$notice_output = '';
+		if ( ! empty( $notice ) ) {
+			$notice_output = '<br> - ' . implode( '<br> - ', $notice );
+		}
+
+		$output = esc_html( $this->mysql_server_version ) . $notice_output;
 
 		printf(
 			'<span class="%s"></span> %s',
 			esc_attr( $status ),
-			sprintf(
-				'%s%s',
-				esc_html( $this->mysql_server_version ),
-				( ! empty( $notice ) ? '<br> - ' . implode( '<br>', $notice ) : '' )
-			)
+			wp_kses_post( $output )
 		);
 	}
 
@@ -438,14 +458,14 @@ class System_Check {
 					'<span class="warning"></span> %s',
 					sprintf(
 						/* translators: %s: Number of version. */
-						esc_html__( 'WordPress\' utf8mb4 support requires MySQL version %s or greater', 'health-check' ),
+						esc_html__( 'WordPress\' utf8mb4 support requires MySQL version %s or greater', 'tainacan' ),
 						'5.5.3'
 					)
 				);
 			} else {
 				printf(
 					'<span class="good"></span> %s',
-					esc_html__( 'Your MySQL version supports utf8mb4', 'health-check' )
+					esc_html__( 'Your MySQL version supports utf8mb4', 'tainacan' )
 				);
 			}
 		} else { // MariaDB introduced utf8mb4 support in 5.5.0
@@ -454,26 +474,21 @@ class System_Check {
 					'<span class="warning"></span> %s',
 					sprintf(
 						/* translators: %s: Number of version. */
-						esc_html__( 'WordPress\' utf8mb4 support requires MariaDB version %s or greater', 'health-check' ),
+						esc_html__( 'WordPress\' utf8mb4 support requires MariaDB version %s or greater', 'tainacan' ),
 						'5.5.0'
 					)
 				);
 			} else {
 				printf(
 					'<span class="good"></span> %s',
-					esc_html__( 'Your MariaDB version supports utf8mb4', 'health-check' )
+					esc_html__( 'Your MariaDB version supports utf8mb4', 'tainacan' )
 				);
 			}
 		}
 
-		if ( $wpdb->use_mysqli ) {
-			// phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysqli_get_client_info
-			$mysql_client_version = mysqli_get_client_info();
-		} else {
-			// phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysql_get_client_info
-			$mysql_client_version = mysql_get_client_info();
-		}
-
+		// phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysqli_get_client_info
+		$mysql_client_version = mysqli_get_client_info();
+		
 		/*
 		 * libmysql has supported utf8mb4 since 5.5.3, same as the MySQL server.
 		 * mysqlnd has supported utf8mb4 since 5.0.9.
@@ -483,24 +498,14 @@ class System_Check {
 			if ( version_compare( $mysql_client_version, '5.0.9', '<' ) ) {
 				printf(
 					'<br><span class="warning"></span> %s',
-					sprintf(
-						/* translators: %1$s: Name of the library, %2$s: Number of version. */
-						__( 'WordPress\' utf8mb4 support requires MySQL client library (%1$s) version %2$s or newer.', 'health-check' ),
-						'mysqlnd',
-						'5.0.9'
-					)
+					esc_html__( 'WordPress\' utf8mb4 support requires MySQL client library (mysqlnd) version 5.0.9 or newer.', 'tainacan' )
 				);
 			}
 		} else {
 			if ( version_compare( $mysql_client_version, '5.5.3', '<' ) ) {
 				printf(
 					'<br><span class="warning"></span> %s',
-					sprintf(
-						/* translators: %1$s: Name of the library, %2$s: Number of version. */
-						__( 'WordPress\' utf8mb4 support requires MySQL client library (%1$s) version %2$s or newer.', 'health-check' ),
-						'libmysql',
-						'5.5.3'
-					)
+					esc_html__( 'WordPress\' utf8mb4 support requires MySQL client library (libmysql) version 5.5.3 or newer.', 'tainacan' ),
 				);
 			}
 		}
@@ -555,10 +560,6 @@ class System_Check {
 						$class = 'good';
 			}
 		}
-		echo "<span class='$class'></span> $current_version";
+		echo '<span class="' . esc_attr($class) . '"></span>'  . esc_html( $current_version );
 	}
 }
-
-
-
-?>

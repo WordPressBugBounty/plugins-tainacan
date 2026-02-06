@@ -5,7 +5,12 @@ namespace Tainacan\Entities;
 defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
 
 /**
- * Represents the Item Metadatum Entity
+ * Represents a Tainacan Item Metadata Entity.
+ *
+ * Represents the relationship between items and their metadata values,
+ * storing the actual data content for specific metadata fields.
+ *
+ * @since 1.0.0
  */
 class Item_Metadata_Entity extends Entity {
 	protected static $post_type = false;
@@ -210,7 +215,7 @@ class Item_Metadata_Entity extends Entity {
 			 * 
 			 * @return string the item metadatum value string 
 			 */
-			apply_filters( 'tainacan-item-metadata-get-value-as-string', strip_tags($this->get_value_as_html()), $this );
+			apply_filters( 'tainacan-item-metadata-get-value-as-string', wp_strip_all_tags($this->get_value_as_html()), $this );
 	}
 	
 	/**
@@ -520,7 +525,8 @@ class Item_Metadata_Entity extends Entity {
 			if (is_array($value)) {
 				$cardinality = $metadatum->get_cardinality();
 				if ( !empty($cardinality) && $cardinality > 1 && count($value) > $cardinality ) {
-					$this->add_error( 'invalid', sprintf( __('Metadatum %s is set to accept a maximum of %s values.', 'tainacan'), $metadatum->get_name(), $cardinality ) );
+					/* translators: %1$s is the metadatum name, %2$s is the maximum number of values allowed */
+					$this->add_error( 'invalid', sprintf( __('Metadatum %1$s is set to accept a maximum of %2$s values.', 'tainacan'), $metadatum->get_name(), $cardinality ) );
 					return false;
 				}
 				// if its required, at least one must be filled
@@ -536,6 +542,7 @@ class Item_Metadata_Entity extends Entity {
 							$dupe_array[$val] = 1;
 						} else
 						if (++$dupe_array[$val] > 1) {
+							/* translators: %s is the metadatum name */
 							$this->add_error( 'key_exists', sprintf( __('%s is a collection key and there is another item with the same value', 'tainacan'), $metadatum->get_name() ) );
 							return false;
 						}
@@ -551,8 +558,8 @@ class Item_Metadata_Entity extends Entity {
 							'post__not_in' => [$item->get_id()]
 						], $item->get_collection());
 
-						if ($test->have_posts()) {
-							// translators: %s = metadatum name. ex: Register ID is a collection key and there is another item with the same value
+						if ($test->have_posts()) {	
+							/* translators: %s is the metadatum name */
 							$this->add_error( 'key_exists', sprintf( __('%s is a collection key and there is another item with the same value', 'tainacan'), $metadatum->get_name() ) );
 							return false;
 						}

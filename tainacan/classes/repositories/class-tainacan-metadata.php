@@ -2,16 +2,22 @@
 
 namespace Tainacan\Repositories;
 
-use Tainacan\Entities;
-
 defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
 
+use Tainacan\Entities;
 use \Respect\Validation\Validator as v;
 
 /**
- * Class Metadata
+ * Repository for managing Tainacan metadata definitions.
+ *
+ * Handles all database operations for metadata including creation,
+ * updates, deletion, and querying with proper validation and logging.
+ *
+ * @since 1.0.0
  */
 class Metadata extends Repository {
+	use \Tainacan\Traits\Singleton_Instance;
+
 	public $entities_type = '\Tainacan\Entities\Metadatum';
 	protected $default_metadata = 'default';
 	protected $current_taxonomy;
@@ -23,21 +29,7 @@ class Metadata extends Repository {
 		'Tainacan\Metadata_Types\Core_Description'
 	];
 
-	private static $instance = null;
-
-	public static function get_instance() {
-		if ( ! isset( self::$instance ) ) {
-			self::$instance = new self();
-		}
-
-		return self::$instance;
-	}
-
-	/**
-	 * Register specific hooks for metadatum repository
-	 */
-	protected function __construct() {
-		parent::__construct();
+	protected function init() {
 		add_filter( 'pre_trash_post', array( &$this, 'disable_delete_core_metadata' ), 10, 2 );
 		add_filter( 'pre_delete_post', array( &$this, 'force_delete_core_metadata' ), 10, 3 );
 
@@ -207,9 +199,18 @@ class Metadata extends Repository {
 				'description' => __( 'Display by default on listing or do not display or never display.', 'tainacan' ),
 				'default'     => 'no'
 			],
+			'allow_advanced_search' => [
+				'map'         => 'meta',
+				'title'       => __( 'Allow advanced search', 'tainacan' ),
+				'type'        => 'string',
+				'validation'  => v::stringType()->in( [ 'yes', 'no' ] ),
+				'enum'		  => [ 'yes', 'no' ],
+				'description' => __( 'Allow this metadata to be offered as an option for advanced search', 'tainacan' ),
+				'default'     => 'yes'
+			],
 			'semantic_uri'          => [
 				'map'         => 'meta',
-				'title'       => __( 'The semantic metadatum description URI' ),
+				'title'       => __( 'The semantic metadatum description URI', 'tainacan' ),
 				'type'        => 'string',
 				'validation'  => v::optional( v::url() ),
 				'description' => __( 'The semantic metadatum description URI like: ', 'tainacan' ) . 'https://schema.org/URL',
@@ -264,8 +265,8 @@ class Metadata extends Repository {
 			'labels'              => $labels,
 			'hierarchical'        => true,
 			'public'              => true,
-			'show_ui'             => tnc_enable_dev_wp_interface(),
-			'show_in_menu'        => tnc_enable_dev_wp_interface(),
+			'show_ui'             => tainacan_enable_dev_wp_interface(),
+			'show_in_menu'        => tainacan_enable_dev_wp_interface(),
 			'publicly_queryable'  => false,
 			'exclude_from_search' => true,
 			'has_archive'         => false,
@@ -546,7 +547,9 @@ class Metadata extends Repository {
 		} elseif ( is_integer( $collection ) ) {
 			$collection_id = $collection;
 		} else {
-			throw new \InvalidArgumentException( 'fetch_ids_by_collection expects paramater 1 to be a integer or a \Tainacan\Entities\Collection object. ' . gettype( $collection ) . ' given' );
+			throw new \InvalidArgumentException(
+				'fetch_ids_by_collection expects paramater 1 to be a integer or a \Tainacan\Entities\Collection object. ' . esc_html( gettype( $collection ) ) . ' given'
+			);
 		}
 
 		//get parent collections
@@ -759,8 +762,8 @@ class Metadata extends Repository {
 				$new_value = array_diff($old_value, $collection_metadata_sections_id);
 				$new_value[] = (string)$new_metadata_section_id;
 				$metadatum->set_metadata_section_id($new_value);
-				if(!$metadatum->validate()) { 
-					throw new \Exception( $metadatum->get_errors() );
+				if (!$metadatum->validate()) { 
+					throw new \Exception( esc_html( print_r($metadatum->get_errors(), true) ) );
 				}
 			}
 		}
@@ -1146,7 +1149,7 @@ class Metadata extends Repository {
 
 			return $metadatum->get_id();
 		} else {
-			throw new \ErrorException( 'The entity wasn\'t validated.' . print_r( $metadatum->get_errors(), true ) );
+			throw new \ErrorException( 'The entity wasn\'t validated.' . esc_html( print_r( $metadatum->get_errors(), true ) ) );
 		}
 	}
 
@@ -1177,9 +1180,9 @@ class Metadata extends Repository {
 	  *
 	  *     @type array		 $parent_id					Used by taxonomy metadata. The ID of the parent term to retrieve terms from. Default 0
 	  *
-		*     @type bool		 $count_items				Include the count of items that can be found in each value (uses $items_filter as well). Default false
-		*
-		*     @type string   $last_term				The last term returned when using a elasticsearch for calculates the facet.
+	  *     @type bool		 $count_items				Include the count of items that can be found in each value (uses $items_filter as well). Default false
+	  *
+	  *     @type string   	 $last_term					The last term returned when using a elasticsearch for calculates the facet.
 	  *
 	  * }
 	  *
@@ -1391,7 +1394,7 @@ class Metadata extends Repository {
 			} else {
 				$pages = ceil( $total / $number );
 			}
-			$separator = strip_tags(apply_filters('tainacan-terms-hierarchy-html-separator', '>'));
+			$separator = wp_strip_all_tags(apply_filters('tainacan-terms-hierarchy-html-separator', '>'));
 			$values = [];
 			foreach ($results as $r) {
 
@@ -1472,9 +1475,16 @@ class Metadata extends Repository {
 
 				if ( $metadatum_type === 'Tainacan\Metadata_Types\Relationship' ) {
 					$_post = get_post($r);
-					if ( ! $_post instanceof \WP_Post) {
+					if ( ! $_post instanceof \WP_Post ) {
 						continue;
 					}
+					// Check if user can read this post (public posts are readable by everyone)
+					$status = get_post_status( $_post->ID );
+					$post_status_obj = get_post_status_object( $status );
+					if ( ! $post_status_obj || ( ! $post_status_obj->public && ! current_user_can( 'read', $_post->ID ) ) ) {
+						continue;
+					}
+					
 					$label = $_post->post_title;
 				} elseif ( $metadatum_type === 'Tainacan\Metadata_Types\Control' ) {
 					$metadata_type_object = $metadatum->get_metadata_type_object();

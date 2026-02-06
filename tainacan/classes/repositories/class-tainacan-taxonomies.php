@@ -6,27 +6,22 @@ use Tainacan\Entities;
 
 defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
 
-
 use \Respect\Validation\Validator as v;
 
 /**
- * Class Tainacan_Taxonomies
+ * Repository for managing Tainacan taxonomies.
+ *
+ * Handles all database operations for taxonomies including creation,
+ * updates, deletion, and querying with proper validation and logging.
+ *
+ * @since 1.0.0
  */
 class Taxonomies extends Repository {
+	use \Tainacan\Traits\Singleton_Instance;
+
 	public $entities_type = '\Tainacan\Entities\Taxonomy';
 
-	private static $instance = null;
-
-	public static function get_instance() {
-		if ( ! isset( self::$instance ) ) {
-			self::$instance = new self();
-		}
-
-		return self::$instance;
-	}
-
-	protected function __construct() {
-		parent::__construct();
+	protected function init() {
 		add_action( 'tainacan-taxonomy-removed-from-collection', array( $this, 'removed_collection' ), 10, 2 );
 		add_action( 'tainacan-taxonomy-added-to-collection', array( $this, 'added_collection' ), 10, 2 );
 	}
@@ -127,8 +122,8 @@ class Taxonomies extends Repository {
 			'labels'              => $labels,
 			'hierarchical'        => true,
 			'public'              => true,
-			'show_ui'             => tnc_enable_dev_wp_interface(),
-			'show_in_menu'        => tnc_enable_dev_wp_interface(),
+			'show_ui'             => tainacan_enable_dev_wp_interface(),
+			'show_in_menu'        => tainacan_enable_dev_wp_interface(),
 			'publicly_queryable'  => true,
 			'exclude_from_search' => true,
 			'has_archive'         => true,

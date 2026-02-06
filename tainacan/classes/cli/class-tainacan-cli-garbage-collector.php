@@ -2,8 +2,18 @@
 
 namespace Tainacan;
 
+defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
+
 use WP_CLI;
 
+/**
+ * Handles WP-CLI commands for Tainacan garbage collection operations.
+ *
+ * Provides command-line interface for cleaning up unused files, orphaned
+ * database entries, and maintaining Tainacan installation health.
+ *
+ * @since 1.0.0
+ */
 class Cli_Garbage_Collector {
 	
 	

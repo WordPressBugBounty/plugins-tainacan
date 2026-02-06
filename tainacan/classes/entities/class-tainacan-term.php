@@ -5,8 +5,13 @@ namespace Tainacan\Entities;
 defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
 
 /**
- * Represents the Entity Term
-*/
+ * Represents a Tainacan Term entity.
+ *
+ * Terms are individual entries within taxonomies, representing
+ * specific categories or classifications for organizing items.
+ *
+ * @since 1.0.0
+ */
 class Term extends Entity {
 	public $WP_Term;
 
@@ -62,7 +67,7 @@ class Term extends Entity {
 
 		$term_id = $term_array['term_id'];
 		$taxonomy_slug = $this->get_taxonomy();
-		$separator = strip_tags(apply_filters('tainacan-terms-hierarchy-html-separator', '>'));
+		$separator = wp_strip_all_tags(apply_filters('tainacan-terms-hierarchy-html-separator', '>'));
 
 		unset($term_array['term_id']);
 		unset($term_array['status']);

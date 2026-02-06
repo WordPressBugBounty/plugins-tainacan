@@ -1,18 +1,27 @@
 <?php
+
 namespace Tainacan;
 
+defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
+
+/**
+ * Handles media embedding functionality for Tainacan.
+ *
+ * Provides enhanced embedding capabilities for various media types including
+ * video, audio, and PDF files with responsive design support.
+ *
+ * @since 0.1.0
+ */
 class Embed {
-	
-	private static $instance = null;
+	use \Tainacan\Traits\Singleton_Instance;
 
-    public static function get_instance() {
-        if(!isset(self::$instance)) {
-            self::$instance = new self();
-        }
-
-        return self::$instance;
-    }
-
+	/**
+	 * Available aspect ratios for responsive embeds.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @var array Array of aspect ratio configurations.
+	 */
 	private static $aspect_ratios = array(
 		// Common video resolutions.
 		array("ratio" => '2.33', "className" => 'tainacan-embed-aspect-21-9'),
@@ -26,7 +35,17 @@ class Embed {
 		array("ratio" => '0.50', "className" => 'tainacan-embed-aspect-1-2' )
 	);
 	
-	protected function __construct() {
+	/**
+	 * Initializes the embed functionality.
+	 *
+	 * Sets up WordPress hooks for video, audio, and PDF embedding,
+	 * and enqueues necessary styles for responsive embeds.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @return void
+	 */
+	protected function init() {
 		
 		/**
 		 * Replace default WordPress embedders with HTML 5 tags instead of shortcodes
@@ -48,6 +67,17 @@ class Embed {
 
 	}
 	
+	/**
+	 * Filters video embed output to use HTML5 video tags.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param string $video    The current video embed HTML.
+	 * @param array  $attr     Embed attributes.
+	 * @param string $url      The video URL.
+	 * @param array  $rawattr  Raw embed attributes.
+	 * @return string Modified video embed HTML.
+	 */
 	public function filter_video_embed($video, $attr, $url, $rawattr) {
 		
 		
@@ -62,8 +92,18 @@ class Embed {
 		
 	}
 	
+	/**
+	 * Filters audio embed output to use HTML5 audio tags.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param string $audio    The current audio embed HTML.
+	 * @param array  $attr     Embed attributes.
+	 * @param string $url      The audio URL.
+	 * @param array  $rawattr  Raw embed attributes.
+	 * @return string Modified audio embed HTML.
+	 */
 	public function filter_audio_embed($audio, $attr, $url, $rawattr) {
-		
 		
 		if ( ! empty( $attr['width'] ) ) {
 			$dimensions = sprintf( 'width="%d" ', (int) $attr['width'] );
@@ -75,6 +115,17 @@ class Embed {
 		
 	}
 	
+	/**
+	 * Handles PDF file embedding using iframe.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param array  $matches   Regex matches from the embed handler.
+	 * @param array  $attr      Embed attributes.
+	 * @param string $url       The PDF file URL.
+	 * @param array  $rawattr   Raw embed attributes.
+	 * @return string PDF embed HTML.
+	 */
 	public function pdf_embed_handler($matches, $attr, $url, $rawattr) {
 		global $TAINACAN_BASE_URL;
 		
@@ -96,10 +147,12 @@ class Embed {
 	}
 	
 	/**
-	 * Retrieves the thumbnail URL, if provided, for a given URL
+	 * Retrieves the thumbnail URL, if provided, for a given URL.
 	 * 
-	 * @param  $string $url the URL for the content
-	 * @return string|null  The thumbnail URL or null on failure
+	 * @since 0.1.0
+	 *
+	 * @param string $url The URL for the content.
+	 * @return string|null The thumbnail URL or null on failure.
 	 */
 	public function oembed_get_thumbnail($url) {
 		
@@ -109,6 +162,16 @@ class Embed {
 		return $return;
 		
 	}
+	/**
+	 * Filters oEmbed data to extract thumbnail URL.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param mixed  $return The oEmbed return data.
+	 * @param object $data   The oEmbed data object.
+	 * @param string $url    The original URL.
+	 * @return string|null The thumbnail URL or null.
+	 */
 	public function oembed_get_thumbnail_filter($return, $data, $url) {
 		
 		if ( isset($data->thumbnail_url) ) {
@@ -120,20 +183,112 @@ class Embed {
 	}
 
 	/**
-	 * Responsiveness
+	 * Adds inline CSS for responsive embeds.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @return void
 	 */
-	public function add_css() {
-		global $TAINACAN_BASE_URL;
-		wp_enqueue_style( 'tainacan-embeds', $TAINACAN_BASE_URL . '/assets/css/tainacan-embeds.css', [], TAINACAN_VERSION );
+	/**
+	 * Gets the CSS styles for responsive embeds. (Too small to be a separate file)
+	 *
+	 * This CSS copies most of Gutenberg's logic for responsive blocks,
+	 * but uses different classes to avoid future conflicts.
+	 * Check their original css: /packages/block-library/src/embed/style.scss
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return string CSS content for responsive embeds.
+	 */
+	private static function get_embeds_css() {
+		return '/* TAINACAN EMBEDS 
+		* This file copies most of Gutenberg\'s logic for responsive blocks,
+		* but uses different classes to avoid future conflicts.
+		* Check their original css: /packages/block-library/src/embed/style.scss
+		*/
+
+		/* 
+		* The embed container is in a `figure` element, and many themes zero this out.
+		* This rule explicitly sets it, to ensure at least some bottom-margin in the flow.
+		*/
+		:not(.wp-block-embed__wrapper)>.tainacan-content-embed {
+			margin-bottom: 1em;
+			margin-left: 0;
+			margin-right: 0;
+			clear: both;
+		}
+		/* Don\'t allow iframe to overflow it\'s container. */
+		:not(.wp-block-embed__wrapper)>.tainacan-content-embed iframe {
+			max-width: 100%;
+		}
+		:not(.wp-block-embed__wrapper)>.tainacan-content-embed .tainacan-content-embed__wrapper {
+			position: relative;
+		}
+		/* Add responsiveness to embeds with aspect ratios. */
+		:not(.wp-block-embed__wrapper)>.tainacan-has-aspect-ratio .tainacan-content-embed__wrapper::before {
+			content: "";
+			display: block;
+			padding-top: 50%; /* Default to 2:1 aspect ratio. */
+		}
+		:not(.wp-block-embed__wrapper)>.tainacan-has-aspect-ratio iframe {
+			position: absolute;
+			top: 0;
+			right: 0;
+			bottom: 0;
+			left: 0;
+			height: 100%;
+			width: 100%;
+		}
+		:not(.wp-block-embed__wrapper)>.tainacan-embed-aspect-21-9 .tainacan-content-embed__wrapper::before {
+			padding-top: 42.85%; /* 9 / 21 * 100 */
+		}
+		:not(.wp-block-embed__wrapper)>.tainacan-embed-aspect-18-9 .tainacan-content-embed__wrapper::before {
+			padding-top: 50%; /* 9 / 18 * 100 */
+		}
+		:not(.wp-block-embed__wrapper)>.tainacan-embed-aspect-16-9 .tainacan-content-embed__wrapper::before {
+			padding-top: 56.25%; /* 9 / 16 * 100 */
+		}
+		:not(.wp-block-embed__wrapper)>.tainacan-embed-aspect-4-3 .tainacan-content-embed__wrapper::before {
+			padding-top: 75%; /* 3 / 4 * 100 */
+		}
+		:not(.wp-block-embed__wrapper)>.tainacan-embed-aspect-1-1 .tainacan-content-embed__wrapper::before {
+			padding-top: 100%; /* 1 / 1 * 100 */
+		}
+		:not(.wp-block-embed__wrapper)>.tainacan-embed-aspect-9-16 .tainacan-content-embed__wrapper::before {
+			padding-top: 177.77%; /* 16 / 9 * 100 */
+		}
+		:not(.wp-block-embed__wrapper)>.tainacan-embed-aspect-3-4 .tainacan-content-embed__wrapper::before {
+			padding-top: 133.33%; /* 4 / 3 * 100 */
+		}
+		:not(.wp-block-embed__wrapper)>.tainacan-embed-aspect-1-2 .tainacan-content-embed__wrapper::before {
+			padding-top: 200%; /* 2 / 1 * 100 */
+		}';
 	}
 
 	/**
-	 * Get responsive class based on aspect ratio
+	 * Adds inline CSS for responsive embeds.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @return void
+	 */
+	public function add_css() {
+		// Register a minimal style handle and add inline CSS
+		wp_register_style( 'tainacan-embeds-inline', false, array(), TAINACAN_VERSION  );
+		wp_enqueue_style( 'tainacan-embeds-inline' );
+		wp_add_inline_style( 'tainacan-embeds-inline', self::get_embeds_css() );
+	}
+
+	/**
+	 * Adds responsive wrapper classes based on aspect ratio.
+	 *
 	 * This code is heavily inspired by Gutenberg plugin's "getClassNames" function.
 	 * Check their source code for more details: /packages/block-library/src/embed/util.js
-	 * 
-	 * @param {string}  html               The preview HTML that possibly contains an iframe with width and height set.
- 	 * @return {string} Deduped class names.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param string $html The preview HTML that possibly contains an iframe with width and height set.
+	 * @return string HTML with responsive wrapper classes added.
 	 */
 	public function add_responsive_wrapper( $html ) {
 	

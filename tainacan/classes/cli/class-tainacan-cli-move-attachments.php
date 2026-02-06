@@ -2,9 +2,19 @@
 
 namespace Tainacan;
 
+defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
+
 use WP_CLI;
 use Tainacan\Repositories;
 
+/**
+ * Handles WP-CLI commands for Tainacan attachment migration operations.
+ *
+ * Provides command-line interface for migrating attachments to the new
+ * directory structure introduced in Tainacan version 0.11.
+ *
+ * @since 1.0.0
+ */
 class Cli_Move_Attachments {
 	
 	private $collections = [];

@@ -8,29 +8,18 @@ defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
  * Class FilterTypeHelper
  */
 class Filter_Type_Helper {
+	use \Tainacan\Traits\Singleton_Instance;
 
-	private static $instance = null;
 	/**
 	 * Stores external filter type available to be used in Tainacan
 	 */
 	private $registered_filter_type;
 	private $Tainacan_Filters;
 
-	public static function get_instance() {
-		if ( ! isset( self::$instance ) ) {
-			self::$instance = new self();
-		}
-
-		return self::$instance;
-	}
-
-	private function __construct() {
+	private function init() {
 		$this->registered_filter_type = [];
 		$this->Tainacan_Filters = \Tainacan\Repositories\Filters::get_instance();
-		$this->init();
-	}
 
-	private function init() {
 		$this->Tainacan_Filters->register_filter_type('Tainacan\Filter_Types\Date');
 		$this->Tainacan_Filters->register_filter_type('Tainacan\Filter_Types\Numeric');
 		$this->Tainacan_Filters->register_filter_type('Tainacan\Filter_Types\Taginput');
@@ -49,12 +38,18 @@ class Filter_Type_Helper {
 		// the priority should see less than on function 
 		// `load_admin_page()` of class `Admin` in file /src/views/class-tainacan-admin.php
 		add_action( 'admin_enqueue_scripts', array( &$this, 'register_filter_type_compoment' ), 80 );
-		do_action('tainacan-register-filter-type', $this);
+		do_action( 'tainacan-register-filter-type', $this );
 	}
 
 	public function register_filter_type_compoment() {
 		foreach($this->registered_filter_type as $handle => $component) {
-			wp_enqueue_script($handle, $component['script_path']);
+			wp_enqueue_script(
+				$handle, 
+				$component['script_path'], 
+				array(), 
+				TAINACAN_VERSION,
+				true
+			);
 		}
 	}
 

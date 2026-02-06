@@ -5,7 +5,12 @@ namespace Tainacan\Entities;
 defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
 
 /**
- * Class that represents the Collection entity
+ * Represents a Tainacan Collection entity.
+ *
+ * Collections are the main organizational units in Tainacan, containing
+ * items and their associated metadata, filters, and display settings.
+ *
+ * @since 1.0.0
  */
 class Collection extends Entity {
 
@@ -128,8 +133,8 @@ class Collection extends Entity {
 			//'supports'          => array('title'),
 			//'taxonomies'        => array(self::TAXONOMY),
 			'public'              => true,
-			'show_ui'             => tnc_enable_dev_wp_interface(),
-			'show_in_menu'        => tnc_enable_dev_wp_interface(),
+			'show_ui'             => tainacan_enable_dev_wp_interface(),
+			'show_in_menu'        => tainacan_enable_dev_wp_interface(),
 			//'menu_position'     => 5,
 			//'show_in_nav_menus' => false,
 			'show_in_rest'        => true,

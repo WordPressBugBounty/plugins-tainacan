@@ -2,28 +2,67 @@
 
 namespace Tainacan\Repositories;
 
-use Tainacan\Entities;
-
 defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
 
-use \Respect\Validation\Validator as v;
-use Tainacan\Entities\Collection;
+use Tainacan\Entities;
 
+use \Respect\Validation\Validator as v;
+
+/**
+ * Repository for managing Tainacan collections.
+ *
+ * Handles all database operations for collections including creation,
+ * updates, deletion, and querying with proper validation and logging.
+ *
+ * @since 1.0.0
+ */
 class Collections extends Repository {
+	use \Tainacan\Traits\Singleton_Instance;
+
+	/**
+	 * The entity type this repository manages.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var string
+	 */
 	public $entities_type = '\Tainacan\Entities\Collection';
 
-	private static $instance = null;
+	/**
+	 * Stores the old collection state for comparison during updates.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var \Tainacan\Entities\Collection
+	 */
 	private $old_collection;
+
+	/**
+	 * Stores the old core title for comparison during updates.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var string
+	 */
 	private $old_core_title;
+
+	/**
+	 * Stores the old core description for comparison during updates.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var string
+	 */
 	private $old_core_description;
 
-	public static function get_instance() {
-		if ( ! isset( self::$instance ) ) {
-			self::$instance = new self();
-		}
-
-		return self::$instance;
-	}
+	/**
+	 * Initializes the collections repository.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return void
+	 */
+	protected function init() { }
 
 	/**
 	 * {@inheritDoc}
@@ -528,8 +567,8 @@ class Collections extends Repository {
 			'labels'              => $labels,
 			'hierarchical'        => true,
 			'public'              => true,
-			'show_ui'             => tnc_enable_dev_wp_interface(),
-			'show_in_menu'        => tnc_enable_dev_wp_interface(),
+			'show_ui'             => tainacan_enable_dev_wp_interface(),
+			'show_in_menu'        => tainacan_enable_dev_wp_interface(),
 			'publicly_queryable'  => true,
 			'exclude_from_search' => true,
 			'has_archive'         => true,
@@ -690,7 +729,7 @@ class Collections extends Repository {
 			$collection->set_filters_order($parent_collection->get_filters_order());
 
 			if (!$collection->validate()) {
-				throw new \Exception( implode(",", $collection->get_errors()) );
+				throw new \Exception( esc_html( implode(",", array_map('esc_html', $collection->get_errors()) ) ) );
 			}
 		}
 	}

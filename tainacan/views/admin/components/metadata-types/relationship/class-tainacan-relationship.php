@@ -25,18 +25,18 @@ class Relationship extends Metadata_Type {
 					<div class="taginput-container is-focusable"> 
 						<div class="autocomplete control">
 							<div class="control has-icon-right is-loading is-clearfix">
-								<input type="text" class="input" value="'. __('Item') . ' 9" > 
+								<input type="text" class="input" value="'. __('Item', 'tainacan') . ' 9" > 
 							</div> 
 							<div class="dropdown-menu" style="">
 								<div class="dropdown-content">
 									<a class="dropdown-item is-hovered">
-										<span>'. __('Collection') . ' 3 <strong>'._('item') . ' 2</strong>9</span>
+										<span>'. __('Collection', 'tainacan') . ' 3 <strong>' . __('item', 'tainacan') . ' 2</strong>9</span>
 									</a>
 									<a class="dropdown-item">
-										<span>'. __('Collection') . ' 3 <strong>'._('item') . ' 4</strong>9</span>
+										<span>'. __('Collection', 'tainacan') . ' 3 <strong>' . __('item', 'tainacan') . ' 4</strong>9</span>
 									</a>
 									<a class="dropdown-item">
-										<span>'. __('Collection') . ' 3 <strong>'._('item') . ' 9</strong>8</span>
+										<span>'. __('Collection', 'tainacan') . ' 3 <strong>'. __('item', 'tainacan') . ' 9</strong>8</span>
 									</a>
 								</div>
 							</div>
@@ -264,8 +264,8 @@ class Relationship extends Metadata_Type {
 			$item instanceof \Tainacan\Entities\Item && (
 				is_user_logged_in() ||
 				(
-					\is_post_status_viewable( $item->get_status() ) &&
-					($item->get_collection() != null && \is_post_status_viewable( $item->get_collection()->get_status() ))
+					\tainacan_is_post_status_viewable( $item->get_status() ) &&
+					($item->get_collection() != null && \tainacan_is_post_status_viewable( $item->get_collection()->get_status() ))
 				)
 			)
 		);
@@ -275,14 +275,13 @@ class Relationship extends Metadata_Type {
 		$return = '';
 		$id = $item->get_id();
 		
-		if(!empty($display_metas) && is_array($display_metas) && count($display_metas) > 1) {
-			$has_thumbnail = array_search('thumbnail', $display_metas);
+		if ( !empty($display_metas) && is_array($display_metas) && count($display_metas) > 1 ) {
+			$has_thumbnail = in_array('thumbnail', $display_metas);
 			$thumbnail_id = false;
-			if($has_thumbnail !== false) {
-				unset($display_metas[$has_thumbnail]);
+			if ( $has_thumbnail !== false ) {
 				$thumbnail_id = $item->get__thumbnail_id();
 			}
-			$args = ['post__in' => $display_metas];
+			$args = [ 'post__in' => array_filter($display_metas, function($meta) { return $meta !== 'thumbnail'; } ) ];
 			$metadatum = $item->get_metadata($args);
 
 			$metadata_value = [];
@@ -355,13 +354,14 @@ class Relationship extends Metadata_Type {
 			if ($value_link) {
 				?>
 					<div class="tainacan-relationship-metadatum-header">
-						<?php echo ($should_display_thumbnail ? $this->get_item_thumbnail($thumbnail_id, $item) : ''); ?>
+						<?php echo wp_kses_post($should_display_thumbnail ? $this->get_item_thumbnail($thumbnail_id, $item) : ''); ?>
 						<h4 class="label">
 							<?php
 							/**
 							 * Note to code reviewers: This lines doesn't need to be escaped.
 							 * The variable $value_link is escaped.
 							 */
+							/* phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped */
 							echo $value_link;
 							?>
 						</h4>
@@ -384,19 +384,18 @@ class Relationship extends Metadata_Type {
 							$metadata_wrapper_class .= ' metadata-type-' . $metadata_type;
 					}
 
-
 					$metadata_slug = $meta->get_metadatum()->get_slug();
 
 					if ( $metadata_slug )
 						$metadata_wrapper_class .= ' metadata-slug-' . $metadata_slug;
 				}
 				?>
-					<div class="<?php echo $metadata_wrapper_class; ?>">
+					<div class="<?php echo esc_attr( $metadata_wrapper_class ); ?>">
 						<h5 class="label related-metadadum-label">
 							<?php echo esc_html($meta->get_metadatum()->get_name()); ?>
 						</h5>
 						<p>
-							<?php echo wp_kses_tainacan(($value_link === false ? $meta->get_value_as_html() : $value_link)); ?> 
+							<?php echo wp_kses(($value_link === false ? $meta->get_value_as_html() : $value_link), wp_kses_allowed_html('tainacan_content')); ?> 
 						</p>
 					</div>
 				<?php

@@ -1,5 +1,8 @@
 <?php
+
 namespace Tainacan\OAIPMHExpose;
+
+defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
 
 /**
  * A wraper of DOMDocument for data provider
@@ -108,6 +111,6 @@ class Xml_Create {
         $pr->preserveWhiteSpace = false;
         $pr->formatOutput = true;
         $pr->loadXML($this->doc->saveXML());
-        echo $pr->saveXML();
+        echo esc_xml($pr->saveXML());
     }
 }

@@ -2,35 +2,28 @@
 
 namespace Tainacan\Repositories;
 
+defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
+
 use Tainacan\Entities;
 use Tainacan\Entities\Entity;
 
-defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
-
 /**
- * Implement a Logs system
+ * Repository for managing Tainacan logs.
  *
- * @author medialab
+ * Implements a comprehensive logging system for tracking changes
+ * and operations within Tainacan including entity modifications.
  *
+ * @since 1.0.0
  */
 class Logs extends Repository {
+	use \Tainacan\Traits\Singleton_Instance;
+
 	public $entities_type = '\Tainacan\Entities\Log';
-	private static $instance = null;
 	private $current_diff = null;
 	private $current_deleting_entity;
 	private $current_action;
 
-	public static function get_instance() {
-		if ( ! isset( self::$instance ) ) {
-			self::$instance = new self();
-		}
-
-		return self::$instance;
-	}
-
-
-	protected function __construct() {
-		parent::__construct();
+	protected function init() {
 
 		add_action( 'tainacan-pre-insert', array( $this, 'pre_insert_entity' ) );
 
@@ -42,7 +35,8 @@ class Logs extends Repository {
 		add_action( 'delete_attachment', array( $this, 'pre_delete_attachment' ) );
 		add_action( 'delete_post', array( $this, 'delete_attachment' ) );
 
-		add_filter('tainacan-log-set-title', [$this, 'filter_log_title']);
+		add_filter( 'tainacan-log-set-title', array( $this, 'filter_log_title' ) );
+		add_filter( 'pre_wp_unique_post_slug', array( $this, 'tainacan_set_log_slug' ), 10, 6 );
 	}
 
 	protected function _get_map() {
@@ -66,7 +60,7 @@ class Logs extends Repository {
 				'map'         => 'post_content',
 				'title'       => __( 'Description', 'tainacan' ),
 				'type'        => 'string',
-				'description' => __( 'The log description' ),
+				'description' => __( 'The log description', 'tainacan' ),
 				'default'     => '',
 				'validation'  => ''
 			],
@@ -74,14 +68,14 @@ class Logs extends Repository {
 				'map'         => 'post_name',
 				'title'       => __( 'Slug', 'tainacan' ),
 				'type'        => 'string',
-				'description' => __( 'The log slug' ),
+				'description' => __( 'The log slug', 'tainacan' ),
 				'validation'  => ''
 			],
 			'user_id'        => [
 				'map'         => 'post_author',
 				'title'       => __( 'User ID', 'tainacan' ),
 				'type'        => 'integer',
-				'description' => __( 'Unique identifier' ),
+				'description' => __( 'Unique identifier', 'tainacan' ),
 				'validation'  => ''
 			],
 			'item_id'        => [
@@ -166,8 +160,8 @@ class Logs extends Repository {
 			'labels'              => $labels,
 			'hierarchical'        => true,
 			'public'              => false,
-			'show_ui'             => tnc_enable_dev_wp_interface(),
-			'show_in_menu'        => tnc_enable_dev_wp_interface(),
+			'show_ui'             => tainacan_enable_dev_wp_interface(),
+			'show_in_menu'        => tainacan_enable_dev_wp_interface(),
 			'show_in_nav_menus'   => false,
 			'publicly_queryable'  => false,
 			'exclude_from_search' => true,
@@ -278,10 +272,12 @@ class Logs extends Repository {
 
 				if ( $entity instanceof Entities\Collection ) {
 					$collection_id = $entity->get_id();
+					/* translators: %s is the collection name */
 					$log->set_title( sprintf( __( 'New file was attached to Collection "%s"', 'tainacan'), $entity->get_name() ) );
 				}
 				if ( $entity instanceof Entities\Item ) {
 					$log->set_item_id($entity->get_id());
+					/* translators: %s is the item title */
 					$log->set_title( sprintf( __( 'New file was attached to Item "%s"', 'tainacan'), $entity->get_title() ) );
 				}
 
@@ -334,10 +330,12 @@ class Logs extends Repository {
 
 					if ( $entity instanceof Entities\Collection ) {
 						$collection_id = $entity->get_id();
+						/* translators: %s is the collection name */
 						$log->set_title( sprintf(__( 'File attached to Collection "%s" was removed', 'tainacan'), $entity->get_name() ) );
 					}
 					if ( $entity instanceof Entities\Item ) {
 						$log->set_item_id($entity->get_id());
+						/* translators: %s is the item title */
 						$log->set_title( sprintf( __( 'File attached to Item "%s" was removed' , 'tainacan'), $entity->get_title() ) );
 					}
 
@@ -519,15 +517,19 @@ class Logs extends Repository {
 
 			if ($this->current_action == 'update') {
 				if (isset($diff['new']['metadata_order'])) {
+					/* translators: %s is the collection name */
 					$log->set_title( sprintf( __( 'Collection "%s" metadata order was updated', 'tainacan'), $entity->get_name() ) );
 					$log->set_action('update-metadata-order');
 				} elseif (isset($diff['new']['filters_order'])) {
+					/* translators: %s is the collection name */
 					$log->set_title( sprintf( __( 'Collection "%s" filters order was updated', 'tainacan'), $entity->get_name() ) );
 					$log->set_action('update-filters-order');
 				} else {
+					/* translators: %s is the collection name */
 					$log->set_title( sprintf( __( 'Collection "%s" was updated', 'tainacan'), $entity->get_name() ) );
 				}
 			} elseif ($this->current_action == 'create') {
+				/* translators: %s is the collection name */
 				$log->set_title( sprintf( __( 'Collection "%s" was created', 'tainacan'), $entity->get_name() ) );
 			}
 
@@ -537,39 +539,49 @@ class Logs extends Repository {
 
 			if ($this->current_action == 'update') {
 				if (isset($diff['new']['document'])) {
+					/* translators: %s is the item title */
 					$log->set_title( sprintf( __( 'Item "%s" document was updated', 'tainacan'), $entity->get_title() ) );
 					$log->set_action('update-document');
 				} elseif (isset($diff['new']['_thumbnail_id'])) {
+					/* translators: %s is the item title */
 					$log->set_title( sprintf( __( 'Item "%s" thumbnail was updated', 'tainacan'), $entity->get_title() ) );
 					$log->set_action('update-thumbnail');
 				} else {
+					/* translators: %s is the item title */
 					$log->set_title( sprintf( __( 'Item "%s" was updated', 'tainacan'), $entity->get_title() ) );
 				}
 			} elseif ($this->current_action == 'create') {
+				/* translators: %1$s is the item title, %2$s is the item ID */
 				$log->set_title( sprintf( __( 'Item "%1$s" was created with the ID %2$s', 'tainacan'), $entity->get_title(), $entity->get_id() ) );
 			}
 		} elseif ( $entity instanceof Entities\Filter ) {
 
 			if ( 'default' == $collection_id ) {
 				if ($this->current_action == 'update') {
-					$log->set_title( sprintf( __( 'Filter "%1$s" was updated in repository level', 'tainacan'), $entity->get_name() ) );
+					/* translators: %s is the filter name */
+					$log->set_title( sprintf( __( 'Filter "%s" was updated in repository level', 'tainacan'), $entity->get_name() ) );
 				} elseif ($this->current_action == 'create') {
-					$log->set_title( sprintf( __( 'Filter "%1$s" was added to the repository', 'tainacan'), $entity->get_name() ) );
+					/* translators: %s is the filter name */
+					$log->set_title( sprintf( __( 'Filter "%s" was added to the repository', 'tainacan'), $entity->get_name() ) );
 				}
 			} elseif ( is_numeric($collection_id) ) {
 				$collection = $entity->get_collection();
 
 				if ( $collection instanceof Entities\Collection ) {
 					if ($this->current_action == 'update') {
+						/* translators: %1$s is the filter name, %2$s is the collection name */
 						$log->set_title( sprintf( __( 'Filter "%1$s" was updated in Collection "%2$s"', 'tainacan'), $entity->get_name(), $collection->get_name() ) );
 					} elseif ($this->current_action == 'create') {
+						/* translators: %1$s is the filter name, %2$s is the collection name */
 						$log->set_title( sprintf( __( 'Filter "%1$s" was added to Collection "%2$s"', 'tainacan'), $entity->get_name(), $collection->get_name() ) );
 					}
 				} else {
 					if ($this->current_action == 'update') {
-						$log->set_title( sprintf( __( 'Filter "%1$s" was updated in unknown collection', 'tainacan'), $entity->get_name() ) );
+						/* translators: %s is the filter name */
+						$log->set_title( sprintf( __( 'Filter "%s" was updated in unknown collection', 'tainacan'), $entity->get_name() ) );
 					} elseif ($this->current_action == 'create') {
-						$log->set_title( sprintf( __( 'Filter "%1$s" was added to unknown collection', 'tainacan'), $entity->get_name() ) );
+						/* translators: %s is the filter name */
+						$log->set_title( sprintf( __( 'Filter "%s" was added to unknown collection', 'tainacan'), $entity->get_name() ) );
 					}
 				}
 			}
@@ -578,24 +590,30 @@ class Logs extends Repository {
 
 			if ( 'default' == $collection_id ) {
 				if ($this->current_action == 'update') {
+					/* translators: %s is the metadatum name */
 					$log->set_title( sprintf( __( 'Metadatum "%s" was updated in repository level', 'tainacan'), $entity->get_name() ) );
 				} elseif ($this->current_action == 'create') {
-					$log->set_title( sprintf( __( 'Metadatum "%1$s" was added to the repository', 'tainacan'), $entity->get_name() ) );
+					/* translators: %s is the metadatum name */
+					$log->set_title( sprintf( __( 'Metadatum "%s" was added to the repository', 'tainacan'), $entity->get_name() ) );
 				}
 			} elseif ( is_numeric($collection_id) ) {
 				$collection = $entity->get_collection();
 
 				if ( $collection instanceof Entities\Collection ) {
 					if ($this->current_action == 'update') {
+						/* translators: %1$s is the metadatum name, %2$s is the collection name */
 						$log->set_title( sprintf( __( 'Metadatum "%1$s" was updated in Collection "%2$s"', 'tainacan'), $entity->get_name(), $collection->get_name() ) );
 					} elseif ($this->current_action == 'create') {
+						/* translators: %1$s is the metadatum name, %2$s is the collection name */
 						$log->set_title( sprintf( __( 'Metadatum "%1$s" was added to Collection "%2$s"', 'tainacan'), $entity->get_name(), $collection->get_name() ) );
 					}
 				} else {
 					if ($this->current_action == 'update') {
+						/* translators: %s is the metadatum name */
 						$log->set_title( sprintf( __( 'Metadatum "%s" was updated in unknown collection', 'tainacan'), $entity->get_name() ) );
 					} elseif ($this->current_action == 'create') {
-						$log->set_title( sprintf( __( 'Metadatum "%1$s" was added to unknown collection', 'tainacan'), $entity->get_name() ) );
+						/* translators: %s is the metadatum name */
+						$log->set_title( sprintf( __( 'Metadatum "%s" was added to unknown collection', 'tainacan'), $entity->get_name() ) );
 					}
 				}
 			}
@@ -603,9 +621,11 @@ class Logs extends Repository {
 		} elseif ( $entity instanceof Entities\Taxonomy ) {
 
 			if ($this->current_action == 'update') {
+				/* translators: %s is the taxonomy name */
 				$log->set_title( sprintf( __( 'Taxonomy "%s" was updated', 'tainacan'), $entity->get_name() ) );
 			} elseif ($this->current_action == 'create') {
-				$log->set_title( sprintf( __( 'Taxonomy "%1$s" was created', 'tainacan'), $entity->get_name() ) );
+				/* translators: %s is the taxonomy name */
+				$log->set_title( sprintf( __( 'Taxonomy "%s" was created', 'tainacan'), $entity->get_name() ) );
 			}
 
 		}  elseif ( $entity instanceof Entities\Term ) {
@@ -617,8 +637,10 @@ class Logs extends Repository {
 			}
 
 			if ($this->current_action == 'update') {
+				/* translators: %1$s is the term name, %2$s is the taxonomy name */
 				$log->set_title( sprintf( __( 'Term "%1$s" was updated in "%2$s" taxonomy', 'tainacan'), $entity->get_name(), $tax_name ) );
 			} elseif ($this->current_action == 'create') {
+				/* translators: %1$s is the term name, %2$s is the taxonomy name */
 				$log->set_title( sprintf( __( 'Term "%1$s" was added to "%2$s" taxonomy', 'tainacan'), $entity->get_name(), $tax_name ) );
 			}
 
@@ -676,8 +698,10 @@ class Logs extends Repository {
 			$collection_id = $entity->get_id();
 
 			if ($this->current_action == 'delete') {
+				/* translators: %s is the collection name */
 				$log->set_title( sprintf( __( 'Collection "%s" was permanently deleted', 'tainacan'), $entity->get_name() ) );
 			} elseif ($this->current_action == 'trash') {
+				/* translators: %s is the collection name */
 				$log->set_title( sprintf( __( 'Collection "%s" was moved to trash', 'tainacan'), $entity->get_name() ) );
 			}
 
@@ -686,32 +710,40 @@ class Logs extends Repository {
 			$log->set_item_id($entity->get_id());
 
 			if ($this->current_action == 'delete') {
+				/* translators: %1$s is the item title, %2$s is the item ID */
 				$log->set_title( sprintf( __( 'Item "%1$s" (ID %2$s) was updated', 'tainacan'), $entity->get_title(), $entity->get_id() ) );
 			} elseif ($this->current_action == 'trash') {
+				/* translators: %1$s is the item title, %2$s is the item ID */
 				$log->set_title( sprintf( __( 'Item "%1$s" (ID %2$s) was moved to trash', 'tainacan'), $entity->get_title(), $entity->get_id() ) );
 			}
 		} elseif ( $entity instanceof Entities\Filter ) {
 
 			if ( 'default' == $collection_id ) {
 				if ($this->current_action == 'delete') {
+					/* translators: %s is the filter name */
 					$log->set_title( sprintf( __( 'Filter "%s" was permanently deleted from the repository', 'tainacan'), $entity->get_name() ) );
 				} elseif ($this->current_action == 'trash') {
-					$log->set_title( sprintf( __( 'Repository Filter "%1$s" was moved to trash', 'tainacan'), $entity->get_name() ) );
+					/* translators: %s is the filter name */
+					$log->set_title( sprintf( __( 'Repository Filter "%s" was moved to trash', 'tainacan'), $entity->get_name() ) );
 				}
 			} elseif ( is_numeric($collection_id) ) {
 				$collection = $entity->get_collection();
 
 				if ( $collection instanceof Entities\Collection ) {
 					if ($this->current_action == 'delete') {
+						/* translators: %1$s is the filter name, %2$s is the collection name */
 						$log->set_title( sprintf( __( 'Filter "%1$s" was permanently deleted from Collection "%2$s"', 'tainacan'), $entity->get_name(), $collection->get_name() ) );
 					} elseif ($this->current_action == 'trash') {
+						/* translators: %1$s is the filter name, %2$s is the collection name */
 						$log->set_title( sprintf( __( 'Filter "%1$s" was moved to trash in Collection "%2$s"', 'tainacan'), $entity->get_name(), $collection->get_name() ) );
 					}
 				} else {
 					if ($this->current_action == 'delete') {
-						$log->set_title( sprintf( __( 'Filter "%1$s" was permanently deleted from unknown collection', 'tainacan'), $entity->get_name() ) );
+						/* translators: %s is the filter name */
+						$log->set_title( sprintf( __( 'Filter "%s" was permanently deleted from unknown collection', 'tainacan'), $entity->get_name() ) );
 					} elseif ($this->current_action == 'trash') {
-						$log->set_title( sprintf( __( 'Filter "%1$s" was moved to trash in unknown collection', 'tainacan'), $entity->get_name() ) );
+						/* translators: %s is the filter name */
+						$log->set_title( sprintf( __( 'Filter "%s" was moved to trash in unknown collection', 'tainacan'), $entity->get_name() ) );
 					}
 				}
 			}
@@ -720,24 +752,30 @@ class Logs extends Repository {
 
 			if ( 'default' == $collection_id ) {
 				if ($this->current_action == 'delete') {
+					/* translators: %s is the metadatum name */
 					$log->set_title( sprintf( __( 'Metadatum "%s" was permanently deleted from the repository', 'tainacan'), $entity->get_name() ) );
 				} elseif ($this->current_action == 'trash') {
-					$log->set_title( sprintf( __( 'Repository Metadatum "%1$s" was moved to trash', 'tainacan'), $entity->get_name() ) );
+					/* translators: %s is the metadatum name */
+					$log->set_title( sprintf( __( 'Repository Metadatum "%s" was moved to trash', 'tainacan'), $entity->get_name() ) );
 				}
 			} elseif ( is_numeric($collection_id) ) {
 				$collection = $entity->get_collection();
 
 				if ( $collection instanceof Entities\Collection ) {
 					if ($this->current_action == 'delete') {
+						/* translators: %1$s is the metadatum name, %2$s is the collection name */
 						$log->set_title( sprintf( __( 'Metadatum "%1$s" was permanently deleted from Collection "%2$s"', 'tainacan'), $entity->get_name(), $collection->get_name() ) );
 					} elseif ($this->current_action == 'trash') {
+						/* translators: %1$s is the metadatum name, %2$s is the collection name */
 						$log->set_title( sprintf( __( 'Metadatum "%1$s" was moved to trash in Collection "%2$s"', 'tainacan'), $entity->get_name(), $collection->get_name() ) );
 					}
 				} else {
 					if ($this->current_action == 'delete') {
-						$log->set_title( sprintf( __( 'Metadatum "%1$s" was permanently deleted from unknown collection', 'tainacan'), $entity->get_name() ) );
+						/* translators: %s is the metadatum name */
+						$log->set_title( sprintf( __( 'Metadatum "%s" was permanently deleted from unknown collection', 'tainacan'), $entity->get_name() ) );
 					} elseif ($this->current_action == 'trash') {
-						$log->set_title( sprintf( __( 'Metadatum "%1$s" was moved to trash in unknown collection', 'tainacan'), $entity->get_name() ) );
+						/* translators: %s is the metadatum name */
+						$log->set_title( sprintf( __( 'Metadatum "%s" was moved to trash in unknown collection', 'tainacan'), $entity->get_name() ) );
 					}
 				}
 			}
@@ -745,9 +783,11 @@ class Logs extends Repository {
 		} elseif ( $entity instanceof Entities\Taxonomy ) {
 
 			if ($this->current_action == 'delete') {
+				/* translators: %s is the taxonomy name */
 				$log->set_title( sprintf( __( 'Taxonomy "%s" was permanently deleted', 'tainacan'), $entity->get_name() ) );
 			} elseif ($this->current_action == 'trash') {
-				$log->set_title( sprintf( __( 'Taxonomy "%1$s" was moved to trash', 'tainacan'), $entity->get_name() ) );
+				/* translators: %s is the taxonomy name */
+				$log->set_title( sprintf( __( 'Taxonomy "%s" was moved to trash', 'tainacan'), $entity->get_name() ) );
 			}
 
 		}  elseif ( $entity instanceof Entities\Term ) {
@@ -759,8 +799,10 @@ class Logs extends Repository {
 			}
 
 			if ($this->current_action == 'delete') {
+				/* translators: %1$s is the term name, %2$s is the taxonomy name */
 				$log->set_title( sprintf( __( 'Term "%1$s" was permanently deleted from "%2$s" taxonomy', 'tainacan'), $entity->get_name(), $tax_name ) );
 			} elseif ($this->current_action == 'trash') {
+				/* translators: %1$s is the term name, %2$s is the taxonomy name */
 				$log->set_title( sprintf( __( 'Term "%1$s" was moved to trash in "%2$s" taxonomy', 'tainacan'), $entity->get_name(), $tax_name ) );
 			}
 
@@ -815,6 +857,7 @@ class Logs extends Repository {
 		$meta_name = $entity->get_metadatum()->get_name();
 		$item_title = $entity->get_item()->get_title();
 
+		/* translators: %1$s is the metadatum name, %2$s is the item title */
 		$title = sprintf( __( 'Value for %1$s metadatum was updated in item "%2$s"', 'tainacan' ), $meta_name, $item_title );
 
 		$log->set_title($title);
@@ -833,4 +876,13 @@ class Logs extends Repository {
 		return $title;
 	}
 
+	function tainacan_set_log_slug( $override, $slug, $post_ID, $post_status, $post_type, $post_parent ) {
+		if ( 'tainacan-log' === $post_type ) {
+			if ( $post_ID ) {
+				return uniqid( $post_type . '-' . $post_ID );
+			}
+			return uniqid( $post_type . '-' );
+		}
+		return $override;
+	}
 }

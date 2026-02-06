@@ -1,27 +1,39 @@
 <?php
 namespace Tainacan;
 
-use Tainacan\Repositories;
-use Tainacan\Entities;
+defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
 
 /**
- * Class withe helpful methods to handle media in Tainacan
+ * Handles private file management for Tainacan.
+ *
+ * Provides methods for managing private file uploads, access control,
+ * and file organization within Tainacan collections and items.
+ *
+ * @since 0.1.0
  */
 class Private_Files {
+	use \Tainacan\Traits\Singleton_Instance;
 
-	private static $instance = null;
-
+	/**
+	 * Directory separator for file paths.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @var string
+	 */
 	public $dir_separator;
 
-	public static function get_instance() {
-		if(!isset(self::$instance)) {
-			self::$instance = new self();
-		}
-
-		return self::$instance;
-	}
-
-	protected function __construct() {
+	/**
+	 * Initializes the private files functionality.
+	 *
+	 * Sets up WordPress hooks for file upload handling, access control,
+	 * and template redirection for private files.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @return void
+	 */
+	protected function init() {
 
 		// Once upon a time I thought I had to worry about Windows and use DIRECTORY_SEPARATOR
 		// but this only gave me frustration and bugs.
@@ -45,6 +57,16 @@ class Private_Files {
 
 	}
 
+	/**
+	 * Handles pre-upload processing for Tainacan attachments.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param mixed  $blob     The file data.
+	 * @param string $filename The filename.
+	 * @param int    $post_id  The post ID.
+	 * @return void
+	 */
 	function pre_tainacan_upload($blob, $filename, $post_id) {
 		if (is_numeric($post_id)) {
 			global $TAINACAN_UPLOADING_ATTACHMENT_TO_POST;
@@ -53,6 +75,16 @@ class Private_Files {
 		}
 	}
 
+	/**
+	 * Handles post-upload processing for Tainacan attachments.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param int   $attach_id  The attachment ID.
+	 * @param array $attach_data The attachment data.
+	 * @param int   $post_id    The post ID.
+	 * @return void
+	 */
 	function post_tainacan_upload($attach_id, $attach_data, $post_id) {
 		remove_filter('upload_dir', [$this, 'change_upload_dir']);
 	}
@@ -115,14 +147,18 @@ class Private_Files {
 	function change_upload_dir($path) {
 		$post_id = false;
 
-		// regular ajax uploads via Admin Panel will send post_id
+		// Regular ajax uploads via Admin Panel will send post_id
+		/* phpcs:ignore WordPress.Security.NonceVerification.Recommended -- This is a filter hook called by WordPress core after upload validation. WordPress core already handles nonce verification for uploads in wp_handle_upload() and wp_ajax_upload_attachment(). */
 		if ( isset($_REQUEST['post_id']) && $_REQUEST['post_id'] ) {
-			$post_id = sanitize_text_field($_REQUEST['post_id']);
+			/* phpcs:ignore WordPress.Security.NonceVerification.Recommended -- This is a filter hook called by WordPress core after upload validation. WordPress core already handles nonce verification for uploads in wp_handle_upload() and wp_ajax_upload_attachment(). */
+			$post_id = sanitize_text_field( wp_unslash( $_REQUEST['post_id'] ) );
 		}
 
 		// API requests to media endpoint will send post
+		/* phpcs:ignore WordPress.Security.NonceVerification.Recommended -- This is a filter hook called by WordPress core after upload validation. REST API uploads use authentication tokens, not nonces. */
 		if ( false === $post_id && isset($_REQUEST['post']) && is_numeric($_REQUEST['post']) ) {
-			$post_id = sanitize_text_field($_REQUEST['post']);
+			/* phpcs:ignore WordPress.Security.NonceVerification.Recommended -- This is a filter hook called by WordPress core after upload validation. REST API uploads use authentication tokens, not nonces. */
+			$post_id = sanitize_text_field( wp_unslash( $_REQUEST['post'] ) );
 		}
 
 		// tainacan internals, scripts and tests, will set this global
@@ -245,7 +281,9 @@ class Private_Files {
 					// header('Cache-Control: must-revalidate');
 					// header('Pragma: public');
 					// header('Content-Length: ' . filesize($file));
-					\ob_clean();
+					if (\ob_get_level() > 0) {
+						\ob_clean();
+					}
 					\flush();
 					\readfile($existing_file);
 
@@ -379,6 +417,65 @@ class Private_Files {
 			if (\file_exists($folder)) {
 
 			}
+		}
+	}
+
+	/**
+	 * Function to add rules to [upload_dir]/tainacan/.htaccess
+	 * 
+	 * This function is used as callback for the register_activation_hook
+	 */
+	public static function add_htaccess_rules() {
+		if ( function_exists('insert_with_markers') ) {
+			$uploads_dir = wp_upload_dir(); // Uploads directory
+			$htaccess_dir = trailingslashit($uploads_dir['basedir']) . 'tainacan'; // Path to the tainacan folder
+			$htaccess_file = trailingslashit($htaccess_dir) . '.htaccess'; // Path to the .htaccess file
+
+			// because self::get_items_uploads_folder() is not a static function
+			$tainacan_basepath = (defined('TAINACAN_ITEMS_UPLOADS_DIR'))
+				? TAINACAN_ITEMS_UPLOADS_DIR
+				: 'tainacan-items';
+			$private_dir = trailingslashit($uploads_dir['basedir']) . $tainacan_basepath;
+			$private_htaccess_file = trailingslashit($private_dir) . '.htaccess';
+
+			// If the folder doesn't exist, create it
+			if (!file_exists($htaccess_dir)) {
+				wp_mkdir_p($htaccess_dir);
+			}
+
+			if (!file_exists($private_dir)) {
+				wp_mkdir_p($private_dir);
+			}
+
+			$marker = 'Tainacan wp_upload_dir/tainacan rules'; // Marker name for identification
+			$rules = array(
+				'# Prevent direct access to files',
+				'Order deny,allow',
+				'Deny from all'
+			); // Rules to be added
+
+			// Add rules to the .htaccess file
+			insert_with_markers($htaccess_file, $marker, $rules);
+
+			$marker = 'Tainacan Items Rules';
+			$rules = array(
+				'RewriteEngine On',
+				'# Prevent private files access',
+				'RewriteRule ^_x_\d+/.+$ - [R=404,NC,L]'
+			); // Rules to be added
+
+			$rules = array(
+				'RewriteEngine On',
+				'Options -MultiViews',
+				'# 1. Prevent private files access _x_ID_NUMBER',
+				'RewriteRule ^(.*/)?_x_\d+/.+$ - [F,L]',
+				'# 2. All access files pass to WordPress',
+				'RewriteCond %{REQUEST_FILENAME} !-f',
+				'RewriteCond %{REQUEST_FILENAME} !-d',
+				'RewriteRule ^ /index.php [L,QSA]'
+			);
+
+			insert_with_markers($private_htaccess_file, $marker, $rules);
 		}
 	}
 

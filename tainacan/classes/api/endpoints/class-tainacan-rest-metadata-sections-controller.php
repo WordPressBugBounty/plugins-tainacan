@@ -2,10 +2,20 @@
 
 namespace Tainacan\API\EndPoints;
 
+defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
+
 use \Tainacan\API\REST_Controller;
 use Tainacan\Entities;
 use Tainacan\Repositories;
 
+/**
+ * REST API controller for managing Tainacan metadata sections.
+ *
+ * Handles all REST API endpoints for metadata section operations including
+ * section creation, updates, deletion, and querying within collections.
+ *
+ * @since 1.0.0
+ */
 class REST_Metadata_Sections_Controller extends REST_Controller {
 
 	private $metadata_sections_repository;
@@ -155,7 +165,7 @@ class REST_Metadata_Sections_Controller extends REST_Controller {
 		return $metadata_section;
 	}
 
-		/**
+	/**
 	 * @param Entities\Metadata_Section $item
 	 * @param \WP_REST_Request $request
 	 *
@@ -350,22 +360,17 @@ class REST_Metadata_Sections_Controller extends REST_Controller {
 	 * @throws \Exception
 	 */
 	public function create_item_permissions_check( $request ) {
-		return true;
-		if( isset($request['collection_id']) ) {
-			$collection = $this->collection_repository->fetch( $request['collection_id'] );
 
-			if ( $collection instanceof Entities\Collection ) {
-				return $collection->user_can( 'edit_metadata_section' );
-			}
+		if ( !isset($request['collection_id']) ) 
+			return false;
 
-		} else {
+		$collection = $this->collection_repository->fetch($request['collection_id']);
 
-			return current_user_can( 'tnc_rep_edit_metadata_section' );
-
+		if ( $collection instanceof Entities\Collection ) {
+			return $collection->user_can( 'edit_metasection' );
 		}
 
 		return false;
-
 	}
 
 	/**
@@ -595,11 +600,18 @@ class REST_Metadata_Sections_Controller extends REST_Controller {
 	 * @throws \Exception
 	 */
 	public function update_item_permissions_check( $request ) {
-		return true;
-		$metadatum = $this->metadata_sections_repository->fetch($request['metadatum_id']);
+		$metadata_section = $this->metadata_sections_repository->fetch( $request['metadata_section_id'] );
+		
+		if ( $metadata_section instanceof Entities\Metadata_Section ) 
+			return $metadata_section->can_edit();
 
-		if ($metadatum instanceof Entities\Metadatum) {
-			return $metadatum->can_edit();
+
+		if ( isset($request['collection_id']) && $request['metadata_section_id'] == \Tainacan\Entities\Metadata_Section::$default_section_slug ) {
+
+			$collection = $this->collection_repository->fetch( $request['collection_id'] );
+
+			if ( $collection instanceof Entities\Collection )
+				return $collection->user_can( 'edit_metasection' );
 		}
 
 		return false;
@@ -616,7 +628,7 @@ class REST_Metadata_Sections_Controller extends REST_Controller {
 		$query_params = array_merge($query_params, parent::get_wp_query_params());
 
 		$query_params['name'] = array(
-			'description' => __('Limits the result set to metadata sections with a specific name'),
+			'description' => __('Limits the result set to metadata sections with a specific name', 'tainacan'),
 			'type'        => 'string',
 		);
 

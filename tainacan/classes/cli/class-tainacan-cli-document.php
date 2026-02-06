@@ -2,9 +2,19 @@
 
 namespace Tainacan;
 
+defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
+
 use WP_CLI;
 use Tainacan\Repositories;
 
+/**
+ * Handles WP-CLI commands for Tainacan document indexing operations.
+ *
+ * Provides command-line interface for document content indexing including
+ * PDF content extraction, document processing, and search index updates.
+ *
+ * @since 1.0.0
+ */
 class Cli_Document {
 
 	private $collection_repository;

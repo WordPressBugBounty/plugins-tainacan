@@ -5,47 +5,72 @@ namespace Tainacan\Entities;
 defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
 
 /**
- * Entity Super class
+ * Abstract base class for all Tainacan entities.
  *
+ * Provides common functionality for all Tainacan entities including
+ * validation, error handling, and WordPress post type integration.
+ *
+ * @since 1.0.0
  */
 #[\AllowDynamicProperties]
 class Entity {
 	/**
-	 * The repository of that entity 
+	 * The repository instance for this entity.
+	 *
+	 * @since 1.0.0
+	 *
 	 * @var \Tainacan\Repositories\Repository
 	 */
 	protected $repository;
 	
 	/**
-	 * Array of errors, for example, register validations errors
+	 * Array of validation and other errors.
+	 *
+	 * @since 1.0.0
+	 *
 	 * @var array
 	 */
 	private $errors = [];
 	
 	/**
-	 * The WordPress post_type for store this class if is needed, false otherwise
-	 * @var string
+	 * The WordPress post type for storing this entity.
+	 *
+	 * Set to false if not using WordPress post types.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var string|false
 	 */
 	protected static $post_type = false;
 	
 	/**
-	 * The WordPress capability for the entity post type. Default is to be equal to $post_type
-	 * @var string
+	 * The WordPress capability type for this entity.
+	 *
+	 * Defaults to the same value as $post_type.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var string|false
 	 */
 	protected static $capability_type = false;
 	
 	/**
-	 * Store the WordPress post object 
+	 * The WordPress post object associated with this entity.
+	 *
+	 * @since 1.0.0
+	 *
 	 * @var \WP_Post
 	 */
 	public $WP_Post;
 	
 	/**
-	 * Indicates whether an entity was validated, calling the validate() method
+	 * Indicates whether this entity has been validated.
 	 *
-	 * Entities MUST be validated before attempt to save
-	 * 
-	 * @var boolean
+	 * Entities MUST be validated before attempting to save.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var bool
 	 */
 	private $validated = false;
 	
@@ -87,7 +112,7 @@ class Entity {
 			if ($post instanceof \WP_Post) {
 				$this->WP_Post = get_post($which);
 			} else {
-				throw new \Exception( 'No entity was found with ID ' . $which );
+				throw new \Exception( sprintf( 'No entity was found with ID %d', intval( $which ) ) );
 			}
 			
 		} elseif ($which instanceof \WP_Post) {
@@ -116,15 +141,19 @@ class Entity {
 				( $this->get_post_type() === false && $this->WP_Post->post_type && ! preg_match($collection_pt_pattern, $this->WP_Post->post_type) ) 
 			)
 		) {
-			if($this->get_post_type() === false) {
-				
-				throw new \Exception('the returned post is not the same type of the entity! expected: '.Collection::$db_identifier_prefix.$this->get_db_identifier().Collection::$db_identifier_sufix.' and actual: '.$this->WP_Post->post_type );
-			}
-			else {
-				throw new \Exception('the returned post is not the same type of the entity! expected: '.$this->get_post_type().' and actual: '.$this->WP_Post->post_type );
-			}
+			throw new \Exception(
+				sprintf(
+					'the returned post is not the same type of the entity! expected: %s and actual: %s',
+					esc_html(
+						$this->get_post_type() === false
+							? Collection::$db_identifier_prefix . $this->get_db_identifier() . Collection::$db_identifier_sufix
+							: $this->get_post_type()
+					),
+					esc_html( $this->WP_Post->post_type )
+				)
+			);
 		}
-		if($this->get_post_type() !== false) {
+		if ( $this->get_post_type() !== false ) {
 			$this->cap = $this->get_capabilities();
 		} elseif ($this instanceof Item) {
 			$item_collection = $this->get_collection();

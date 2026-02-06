@@ -2,31 +2,26 @@
 
 namespace Tainacan\Repositories;
 
-use Tainacan\Entities;
-
 defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
 
+use Tainacan\Entities;
 use \Respect\Validation\Validator as v;
 
 /**
- * Class Metadata
+ * Repository for managing Tainacan metadata sections.
+ *
+ * Handles all database operations for metadata sections including creation,
+ * updates, deletion, and querying with proper validation and logging.
+ *
+ * @since 1.0.0
  */
 class Metadata_Sections extends Repository {
+	use \Tainacan\Traits\Singleton_Instance;
 
 	public $entities_type = '\Tainacan\Entities\Metadata_Section';
-	private static $instance = null;
 
-	protected function __construct() {
-		parent::__construct();
+	protected function init() {
 	}
-
-	public static function get_instance() {
-		if ( ! isset( self::$instance ) ) {
-			self::$instance = new self();
-		}
-		return self::$instance;
-	}
-
 
 	/**
 	 * {@inheritDoc}
@@ -54,7 +49,7 @@ class Metadata_Sections extends Repository {
 				'title'       => __( 'Status', 'tainacan' ),
 				'type'        => 'string',
 				'default'     => 'publish',
-				'description' => __( 'Status', 'tainacan' )
+				'description' => __( 'Status for control of visibility and access.', 'tainacan' )
 			],
 			'description'           => [
 				'map'         => 'post_content',
@@ -126,8 +121,8 @@ class Metadata_Sections extends Repository {
 			'labels'              => $labels,
 			'hierarchical'        => true,
 			'public'              => true,
-			'show_ui'             => tnc_enable_dev_wp_interface(),
-			'show_in_menu'        => tnc_enable_dev_wp_interface(),
+			'show_ui'             => tainacan_enable_dev_wp_interface(),
+			'show_in_menu'        => tainacan_enable_dev_wp_interface(),
 			'publicly_queryable'  => true,
 			'exclude_from_search' => true,
 			'has_archive'         => false,
@@ -399,7 +394,7 @@ class Metadata_Sections extends Repository {
 	public function get_default_section_metadata_object_list(Entities\Collection $collection, $args = []) {
 		$metadata_repository = \Tainacan\Repositories\Metadata::get_instance();
 		$list_all_metadatas = $metadata_repository->fetch_by_collection($collection, $args);
-		$sections_ids = array_map(function($el) {return $el->get_id();} , $this->fetch_by_collection($collection, ['posts_per_page' => - 1]));
+		$sections_ids = array_map(function($el) {return $el->get_id();} , $this->fetch_by_collection($collection, ['posts_per_page' => - 1, 'include_disabled' => 'true']));
 		$metadata_list = array_filter($list_all_metadatas, function($meta) use ($sections_ids) {
 			$metadata_section_id = $meta->get_metadata_section_id();
 			if( !isset($metadata_section_id) ) return true;
@@ -498,15 +493,19 @@ class Metadata_Sections extends Repository {
 	 * @throws \Exception
 	 */
 	public function can_edit( Entities\Entity $entity, $user = null ) {
+
 		if ( is_null($entity) )
 			return false;
-		if ($entity instanceof Entities\Metadata_Section && $entity->get_id() == Entities\Metadata_Section::$default_section_slug ) {
+
+		if ( $entity instanceof Entities\Metadata_Section && $entity->get_id() == Entities\Metadata_Section::$default_section_slug ) {
 			$collection = $entity->get_collection();
-			if($collection instanceof Entities\Collection) {
-				return current_user_can( 'tnc_col_' . $collection->get_id() . '_edit_metasection' );
-			}
+			
+			if ($collection instanceof Entities\Collection) 
+				return $collection->user_can( 'edit_metasection' );
+			
 			return false;
 		}
+		
 		return parent::can_edit($entity, $user);
 	}
 }
