@@ -421,7 +421,9 @@ function tainacan_the_media_component($media_id, $media_items_thumbs, $media_ite
  * 	   @type bool		 swiper_arrows_as_svg	  		Uses SVG icons insetead of Tainacan Icon font for navigation arrows
  *     @type string      swiper_arrow_next_custom_svg 	Custom SVG icon to render next navigation arrow
  *     @type string      swiper_arrow_prev_custom_svg 	Custom SVG icon to render previous navigation arrow
- *     @type bool 		 disable_lightbox				Do not open Photoswiper layer on click
+ *     @type bool 		 disable_main_carousel			Disable the main carousel, removing swiper classes and wrappers
+ *     @type bool 		 disable_thumbs_carousel		Disable the thumbs carousel, removing swiper classes and wrappers
+ *     @type bool 		 disable_lightbox				Do not open photoswipe layer on click
  *     @type bool        show_share_button        		Shows share button on lightbox
  *	   @type bool	 	 lightbox_has_light_background  Show a light background instead of dark in the lightbox 
  * }
@@ -462,6 +464,8 @@ function tainacan_get_the_media_component(
 		'swiper_arrows_as_svg' => false,
 		'swiper_arrow_next_custom_svg' => '',
 		'swiper_arrow_prev_custom_svg' => '',
+		'disable_main_carousel' => false,
+		'disable_thumbs_carousel' => false,
 		'disable_lightbox' => false,
 		'show_share_button' => false,
 		'lightbox_has_light_background' => false
@@ -472,6 +476,25 @@ function tainacan_get_the_media_component(
 	$args['media_main_id'] = $media_id . '-main';
 	$args['media_thumbs_id'] = $media_id . '-thumbs';
 	$args['media_id'] = $media_id;
+
+	$media_component_js_config = [
+		'media_main_id' => $args['media_main_id'],
+		'media_thumbs_id' => $args['media_thumbs_id'],
+		'media_id' => $args['media_id'],
+		'has_media_main' => $args['has_media_main'],
+		'has_media_thumbs' => $args['has_media_thumbs'],
+		'swiper_main_options' => $args['swiper_main_options'],
+		'swiper_thumbs_options' => $args['swiper_thumbs_options'],
+		'disable_main_carousel' => $args['disable_main_carousel'],
+		'disable_thumbs_carousel' => $args['disable_thumbs_carousel'],
+		'disable_lightbox' => $args['disable_lightbox'],
+		'lightbox_has_light_background' => $args['lightbox_has_light_background'],
+		'hide_media_name' => isset($args['hide_media_name']) ? (bool) $args['hide_media_name'] : false,
+		'hide_media_caption' => isset($args['hide_media_caption']) ? (bool) $args['hide_media_caption'] : false,
+		'hide_media_description' => isset($args['hide_media_description']) ? (bool) $args['hide_media_description'] : false,
+		'show_share_button' => isset($args['show_share_button']) ? (bool) $args['show_share_button'] : false,
+		'show_download_button' => isset($args['show_download_button']) ? (bool) $args['show_download_button'] : false,
+	];
 
 	$allowed_html = array(
 		'svg' => array(
@@ -498,53 +521,48 @@ function tainacan_get_the_media_component(
 		
 		if ( !isset($args['swiper_arrows_as_svg']) || !$args['swiper_arrows_as_svg'] )
 			wp_enqueue_style( 'tainacan-fonts', $TAINACAN_BASE_URL . '/assets/fonts/tainacanicons.css', array(), TAINACAN_VERSION );
-		
-		// Register/enqueue a script handle for inline scripts
-		$script_handle = 'tainacan-media-component-config';
-		if (!wp_script_is($script_handle, 'registered')) {
-			wp_register_script($script_handle, '', [], TAINACAN_VERSION, false);
-			wp_enqueue_script($script_handle);
-		}
-
-		// Build the inline script content
-		$inline_script = sprintf(
-			"if (typeof tainacan_plugin === 'undefined') { tainacan_plugin = {}; }\n" .
-			"tainacan_plugin.tainacan_media_components = tainacan_plugin.tainacan_media_components || {};\n" .
-			"tainacan_plugin.tainacan_media_components['%s'] = %s;",
-			esc_js($args['media_id']),
-			wp_json_encode($args, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
-		);
-
-		wp_add_inline_script($script_handle, $inline_script);
 
 		?>
 
-		<div id="<?php echo esc_attr($media_id) ?>" data-module="item-gallery" <?php echo wp_kses_post($args['wrapper_attributes']); ?>>
+		<div
+			id="<?php echo esc_attr($media_id) ?>"
+			data-module="item-gallery"
+			data-tainacan-media-component-config="<?php echo esc_attr( wp_json_encode($media_component_js_config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ); ?>"
+			<?php echo wp_kses_post($args['wrapper_attributes']); ?>
+		>
 			<?php if ( $args['has_media_main'] ) : ?>
 				
 				<!-- Slider main container -->
 				<?php echo wp_kses_post($args['before_main_div']) ?>
-				<div id="<?php echo esc_attr($args['media_main_id']) ?>" class="tainacan-media-component__swiper-main swiper <?php echo esc_attr($args['class_main_div']) ?>">
+				<div id="<?php echo esc_attr($args['media_main_id']) ?>" class="tainacan-media-component__swiper-main <?php echo esc_attr($args['class_main_div']) ?> <?php echo !$args['disable_main_carousel'] ? 'swiper' : '' ?>">
 
 					<!-- Additional required wrapper -->
 					<?php echo wp_kses_post($args['before_main_ul']) ?>
-					<ul class="swiper-wrapper <?php echo esc_attr($args['class_main_ul']) ?>">
-						<?php foreach($media_items_main as $media_item) { ?>
-							<li class="swiper-slide <?php echo esc_attr($args['class_main_li']) ?>">
-								<?php 
-									echo wp_kses($media_item, wp_kses_allowed_html('tainacan_content'));
-								 ?>
-							</li>
-						<?php }; ?>
-					</ul>
+					<?php if ( count($media_items_main) > 1 ) : ?>
+						<ul class="tainacan-media-items <?php echo !$args['disable_main_carousel'] ? 'swiper-wrapper ' : '' ?> <?php echo esc_attr($args['class_main_ul']) ?>">
+							<?php foreach($media_items_main as $media_item) { ?>
+								<li class="tainacan-media-item <?php echo !$args['disable_main_carousel'] ? 'swiper-slide ' : '' ?> <?php echo esc_attr($args['class_main_li']) ?>">
+									<?php 
+										echo wp_kses($media_item, wp_kses_allowed_html('tainacan_content'));
+									?>
+								</li>
+							<?php }; ?>
+						</ul>
+					<?php elseif ( count($media_items_main) === 1 ) : ?>
+						<div class="tainacan-media-items <?php echo !$args['disable_main_carousel'] ? 'swiper-wrapper ' : '' ?> <?php echo esc_attr($args['class_main_ul']) ?>">
+							<div class="tainacan-media-item <?php echo !$args['disable_main_carousel'] ? 'swiper-slide ' : '' ?> <?php echo esc_attr($args['class_main_li']) ?>">
+								<?php echo wp_kses($media_items_main[0], wp_kses_allowed_html('tainacan_content')); ?>
+							</div>
+						</div>
+					<?php endif; ?>
 					<?php echo wp_kses_post($args['before_main_ul']) ?>
 
-					<?php if ( $args['swiper_main_options'] && isset($args['swiper_main_options']['pagination']) ) : ?>
+					<?php if ( $args['swiper_main_options'] && isset($args['swiper_main_options']['pagination']) && !$args['disable_main_carousel'] ) : ?>
 						<!-- If we need pagination -->
 						<div class="swiper-pagination swiper-pagination_<?php echo esc_attr($args['media_main_id']) ?>"></div>
 					<?php endif; ?>
 
-					<?php if ( $args['swiper_main_options'] && isset($args['swiper_main_options']['navigation']) ) : ?>
+					<?php if ( $args['swiper_main_options'] && isset($args['swiper_main_options']['navigation']) && !$args['disable_main_carousel'] ) : ?>
 
 						<!-- If we need navigation buttons -->
 						<div class="swiper-button-prev swiper-navigation-prev_<?php echo esc_attr($args['media_main_id']) ?> <?php echo ($args['swiper_arrows_as_svg'] ? 'swiper-button-has-svg' : '' ) ?>">
@@ -581,25 +599,34 @@ function tainacan_get_the_media_component(
 
 				<!-- Slider thumbs container -->
 				<?php echo wp_kses_post($args['before_thumbs_div']) ?>
-				<div id="<?php echo esc_attr($args['media_thumbs_id']) ?>" class="tainacan-media-component__swiper-thumbs swiper <?php echo esc_attr($args['class_thumbs_div']) ?>">
+				<div id="<?php echo esc_attr($args['media_thumbs_id']) ?>" class="tainacan-media-component__swiper-thumbs <?php echo esc_attr($args['class_thumbs_div']) ?> <?php echo !$args['disable_thumbs_carousel'] ? 'swiper' : '' ?>">
 
 					<!-- Additional required wrapper -->
 					<?php echo wp_kses_post($args['before_thumbs_ul']) ?>
-					<ul class="swiper-wrapper <?php echo esc_attr($args['class_thumbs_ul']) ?>">
-						<?php foreach($media_items_thumbs as $media_item) { ?>
-							<li class="swiper-slide <?php echo esc_attr($args['class_thumbs_li']) ?>">
-								<?php echo wp_kses($media_item, wp_kses_allowed_html('tainacan_content')); ?>
-							</li>
-						<?php }; ?>
-					</ul>
+
+					<?php if ( count($media_items_thumbs) > 1 ) : ?>
+						<ul class="tainacan-media-items <?php echo !$args['disable_thumbs_carousel'] ? 'swiper-wrapper ' : '' ?> <?php echo esc_attr($args['class_thumbs_ul']) ?>">
+							<?php foreach($media_items_thumbs as $media_item) { ?>
+								<li class="tainacan-media-item <?php echo !$args['disable_thumbs_carousel'] ? 'swiper-slide ' : '' ?> <?php echo esc_attr($args['class_thumbs_li']) ?>">
+									<?php echo wp_kses($media_item, wp_kses_allowed_html('tainacan_content')); ?>
+								</li>
+							<?php }; ?>
+						</ul>
+					<?php elseif ( count($media_items_thumbs) === 1 ) : ?>
+						<div class="tainacan-media-items <?php echo !$args['disable_thumbs_carousel'] ? 'swiper-wrapper ' : '' ?> <?php echo esc_attr($args['class_thumbs_ul']) ?>">
+							<div class="tainacan-media-item <?php echo !$args['disable_thumbs_carousel'] ? 'swiper-slide ' : '' ?> <?php echo esc_attr($args['class_thumbs_li']) ?>">
+								<?php echo wp_kses($media_items_thumbs[0], wp_kses_allowed_html('tainacan_content')); ?>
+							</div>
+						</div>
+					<?php endif; ?>
 					<?php echo wp_kses_post($args['before_thumbs_ul']) ?>
 
-					<?php if ( $args['swiper_thumbs_options'] && isset($args['swiper_thumbs_options']['pagination']) ) : ?>
+					<?php if ( $args['swiper_thumbs_options'] && isset($args['swiper_thumbs_options']['pagination']) && !$args['disable_thumbs_carousel'] ) : ?>
 						<!-- If we need pagination -->
 						<div class="swiper-pagination swiper-pagination_<?php echo esc_attr($args['media_thumbs_id']) ?>"></div>
 					<?php endif; ?>
 
-					<?php if ( $args['swiper_thumbs_options'] && isset($args['swiper_thumbs_options']['navigation']) ) : ?>
+					<?php if ( $args['swiper_thumbs_options'] && isset($args['swiper_thumbs_options']['navigation']) && !$args['disable_thumbs_carousel'] ) : ?>
 						<!-- If we need navigation buttons -->
 
 						<div class="swiper-button-prev swiper-navigation-prev_<?php echo esc_attr($args['media_thumbs_id']) ?> <?php echo ($args['swiper_arrows_as_svg'] ? 'swiper-button-has-svg' : '' ) ?>">
@@ -630,8 +657,10 @@ function tainacan_get_the_media_component(
 					<?php endif; ?>
 
 					<!-- These elements will create a gradient on the side of the carousel -->
-					<div class="swiper-start-border"></div>
-					<div class="swiper-end-border"></div>
+					<?php if ( !$args['disable_thumbs_carousel'] ) : ?>
+						<div class="swiper-start-border"></div>
+						<div class="swiper-end-border"></div>
+					<?php endif; ?>
 				</div>
 				<?php echo wp_kses_post($args['after_thumbs_div']) ?>
 			<?php endif; ?>
@@ -835,7 +864,7 @@ function tainacan_is_view_mode_enabled($view_mode_slug) {
 	 *     @type bool 	$start_with_filters_hidden					Loads the filters list hidden from start
 	 *     @type bool 	$filters_as_modal							Display the filters as a modal instead of a collapsible region on desktop
 	 *     @type bool 	$show_inline_view_mode_options				Display view modes as inline icon buttons instead of the dropdown
-	 *     @type bool 	$show_fullscreen_with_view_modes			Lists fullscreen viewmodes alongside with other view modes istead of separatelly
+	 *     @type bool 	$show_fullscreen_with_view_modes			Lists fullscreen viewmodes alongside with other view modes istead of separately
 	 *     @type string $default_view_mode							The default view mode
 	 *     @type bool	$is_forced_view_mode						Ignores user prefs to always render the choosen default view mode
 	 *     @type string[] $enabled_view_modes						The list os enable view modes to display

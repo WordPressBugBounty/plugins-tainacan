@@ -69,8 +69,6 @@ return apply_filters( 'tainacan-i18n', [
 	'search'                                         => __( 'Search', 'tainacan' ),
 	'advanced_search'                                => __( 'Advanced search', 'tainacan' ),
 	'continue'                                       => __( 'Continue', 'tainacan' ),
-	'approve_item'                                   => __( 'Approve', 'tainacan' ),
-	'not_approve_item'                               => __( 'Not approve', 'tainacan' ),
 	'add_one_item'                                   => __( 'Add one item', 'tainacan' ),
 	'add_items_bulk'                                 => __( 'Bulk add items', 'tainacan' ),
 	'add_items_external_source'                      => __( 'Add items from an external source', 'tainacan' ),
@@ -85,15 +83,16 @@ return apply_filters( 'tainacan-i18n', [
 	'run'                                            => __( 'Run', 'tainacan' ),
 	'edit_search'                                    => __( 'Edit search', 'tainacan' ),
 	'apply'                                          => __( 'Apply', 'tainacan' ),
-	'add_another_bulk_edit'                  	 => __( 'Add another bulk edit criterion', 'tainacan' ),
-	'add_one_bulk_edit'                      	 => __( 'Add one bulk edit criterion', 'tainacan' ),
-	'remove_bulk_edit'                       	 => __( 'Remove bulk edit criterion', 'tainacan' ),
+	'add_another_bulk_edit'                  	 	 => __( 'Add another bulk edit criterion', 'tainacan' ),
+	'add_one_bulk_edit'                      	 	 => __( 'Add one bulk edit criterion', 'tainacan' ),
+	'remove_bulk_edit'                       	 	 => __( 'Remove bulk edit criterion', 'tainacan' ),
 	'set_new_value'                                  => __( 'Set new value', 'tainacan' ),
 	'replace_value'                                  => __( 'Replace value', 'tainacan' ),
 	'copy_value'                                  	 => __( 'Copy value from', 'tainacan' ),
 	'finish'                                         => __( 'Finish', 'tainacan' ),
 	'select_to_create'                               => __( 'select to create', 'tainacan' ),
-	'new_bulk_edit_criterion'                     => __( 'New bulk edit criterion', 'tainacan' ),
+	'new_bulk_edit_criterion'                     	 => __( 'New bulk edit criterion', 'tainacan' ),
+	'add_bulk_edit_criterion_to_process_queue'      => __( 'Add bulk edit criterion to the process queue', 'tainacan' ),
 	'undo'                                           => __( 'Undo', 'tainacan' ),
 	'delete'                                    	 => __( 'Delete', 'tainacan' ),
 	'skip'	                                    	 => __( 'Skip', 'tainacan' ),
@@ -221,6 +220,12 @@ return apply_filters( 'tainacan-i18n', [
 	'label_attachments_per_page'                     => __( 'Attachments per Page:', 'tainacan' ),
 	'label_processes_per_page'                       => __( 'Processes per Page:', 'tainacan' ),
 	'label_go_to_page'                          	 => __( 'Go to Page:', 'tainacan' ),
+	'label_go_to_collection'                     	 => __( 'Go to collection', 'tainacan' ),
+	'label_go_to_taxonomy'                       	 => __( 'Go to taxonomy', 'tainacan' ),
+	'label_go_to_metadatum'                      	 => __( 'Go to metadatum', 'tainacan' ),
+	'label_go_to_filter'                         	 => __( 'Go to filter', 'tainacan' ),
+	'label_go_to_term'                           	 => __( 'Go to term', 'tainacan' ),
+	'label_go_to_item'                            	 => __( 'Go to item', 'tainacan' ),
 	/* translators: 'Active' here refers to a mode that the metadata are, not a verb or action */
 	'label_active_metadata'                          => __( 'Active Metadata', 'tainacan' ),
 	'label_available_metadata'                       => __( 'Available Metadata', 'tainacan' ),
@@ -238,7 +243,6 @@ return apply_filters( 'tainacan-i18n', [
 	'label_unique_value'                             => __( 'Unique value across items', 'tainacan' ),
 	'label_yes'                                      => __( 'Yes', 'tainacan' ),
 	'label_no'                                       => __( 'No', 'tainacan' ),
-	'label_approved'                                 => __( 'Approved', 'tainacan' ),
 	'label_collection_related'                       => __( 'Collection related', 'tainacan' ),
 	'label_metadata_for_search'                      => __( 'Metadata for search', 'tainacan' ),
 	'label_select_taxonomy'                          => __( 'Select taxonomy', 'tainacan' ),
@@ -292,6 +296,8 @@ return apply_filters( 'tainacan-i18n', [
 	'label_display_default'                          => __( 'Display by default', 'tainacan' ),
 	'label_display_never'                            => __( 'Never displayed', 'tainacan' ),
 	'label_not_display'                              => __( 'Do not display by default', 'tainacan' ),
+	'label_html_formatting_inline'                      => __( 'Inline', 'tainacan' ),
+	'label_html_formatting_list'                        => __( 'List', 'tainacan' ),
 	'label_no_terms_selected'                        => __( 'No terms selected', 'tainacan' ),
 	'label_attach_to_item'                           => __( 'Attach to item', 'tainacan' ),
 	/* translators: Document is the main content of the Item. It can be a file, a url link or a text */
@@ -487,7 +493,6 @@ return apply_filters( 'tainacan-i18n', [
 	'label_activity_description'                     => __( 'Activity description', 'tainacan' ),
 	'label_activity_creation_date'                   => __( 'Activity creation date', 'tainacan' ),
 	'label_activity_author'                          => __( 'Activity author', 'tainacan' ),
-	'label_approbation'                              => __( 'Approbation', 'tainacan'),
 	'label_urls_for_items_list'                 	 => __( 'URLs for Items List', 'tainacan' ),
 	'label_urls_for_item_page'                 	 	 => __( 'URLs for Item Page', 'tainacan' ),
 	'label_item_page_on_website'                 	 => __( 'Item page on website', 'tainacan' ),
@@ -638,6 +643,8 @@ return apply_filters( 'tainacan-i18n', [
 	'label_get_latest_report'						 => __( 'Get latest report', 'tainacan'),
 	'label_decrease'								 => __( 'Decrease', 'tainacan'),
 	'label_increase'								 => __( 'Increase', 'tainacan'),
+	/* translators: %1$s is an action label (e.g. Comparator, Increase, Decrease), %2$s is the filter name */
+	'label_%s_for_%s'								 => __( '%1$s for %2$s', 'tainacan'),
 	'label_set_all_create_metadata'					 => __( 'Set every metadata to be created', 'tainacan'),
 	'label_manage_collection'						 => __( 'Manage collection', 'tainacan'),
 	'label_chart_controls'							 => __( 'Chart controls', 'tainacan'),
@@ -676,7 +683,12 @@ return apply_filters( 'tainacan-i18n', [
 	/* translators: %1$s is the number of metadata, %2$s is the number of sections */
 	'label_metadata_%s_and_sections_%s'				 => __( 'Metadata (%1$s) and Sections (%2$s)', 'tainacan' ),
 	'label_view_activity_logs'						 => __( 'View activity logs', 'tainacan' ),
+	'label_view_changes'                               => __( 'View changes', 'tainacan' ),
+	/* translators: %s is the date */
+	'label_changes_on_%s'                              => __( 'Changes on %s', 'tainacan' ),
 	'label_item_activities'						 	 => __( 'Item activities', 'tainacan' ),
+	/* translators: %s is the metadatum name */
+	'label_item_activities_in_%s'					 => __( 'Item activities in %s', 'tainacan' ),
 	'label_add_new_section'							 => __( 'Add new section', 'tainacan' ),
 	'label_new_metadata_section'					 => __( 'New metadata section', 'tainacan' ),
 	'label_show_details'					 	 	 => __( 'Show details', 'tainacan' ),
@@ -704,7 +716,7 @@ return apply_filters( 'tainacan-i18n', [
 	'label_preset_collections'				 		 => __( 'Preset collections', 'tainacan' ),
 	'label_from_a_mapper'					 		 => __( 'From a metadata mapper', 'tainacan' ),
 	'label_using_a_preset'					 		 => __( 'Using a preset', 'tainacan' ),
-	'label_use_search_separated_words'				 => __( 'Search each word separatelly', 'tainacan' ),
+	'label_use_search_separated_words'				 => __( 'Search each word separately', 'tainacan' ),
 	'label_map'										 => __( 'Map', 'tainacan' ),
 	'label_show_item_location_on_map'				 => __( 'Show item location on map', 'tainacan' ),
 	/* translators: This appears before a select where you choose possible geocoordinate metadata */
@@ -749,6 +761,8 @@ return apply_filters( 'tainacan-i18n', [
 	'label_range_of_dates'				             => __( 'Range of dates', 'tainacan'),
 	'label_view_processes'				             => __( 'View processes', 'tainacan'),
 	'label_collections_taxonomies'				     => __( 'Collection taxonomies', 'tainacan'),
+	/* translators: %s is the number of selected items */
+	'label_apply_to_%s_items'				 		 => __( 'Apply to %s items', 'tainacan'),
 	
 	// Instructions. More complex sentences to guide user and placeholders
 	'instruction_delete_selected_collections'        => __( 'Delete selected collections', 'tainacan' ),
@@ -778,8 +792,8 @@ return apply_filters( 'tainacan-i18n', [
 	'instruction_write_text'                         => __( 'Write Text', 'tainacan' ),
 	/* translators: The verb to search, used in search box placeholder */
 	'instruction_search'                             => __( 'Search', 'tainacan' ),
-	/* translators: The verb to search, used in search box placeholder */
-	'instruction_search_in_repository'               => __( 'Search in repository', 'tainacan' ),
+	/* translators: Search box placeholder when results update on Enter key */
+	'instruction_search_and_press_enter'             => __( 'Type and press Enter...', 'tainacan' ),
 	'instruction_select_a_target_collection'         => __( 'Select a target collection.', 'tainacan' ),
 	'instruction_select_a_mapper'                    => __( 'Select a mapper', 'tainacan' ),
 	'instruction_select_an_importer_type'            => __( 'Select an importer from the options below:', 'tainacan' ),
@@ -828,7 +842,7 @@ return apply_filters( 'tainacan-i18n', [
 	'instruction_create_item_select_status'		 	 => __( 'Select a status for the item visiblity on the site. Remember, whichever you select will still be restricted by the collection status as well.', 'tainacan' ),
 	'instruction_edit_item_status'				 	 => __( 'To alter the item status, select a different update strategy in the footer below.', 'tainacan' ),
 	/* translators: At the end of this sentence there will be a search query typed by the user wrapped in quotes. */
-	'instruction_press_enter_to_search_for'			 => __( 'Press <kbd>ENTER</kbd> to search for', 'tainacan' ),
+	'instruction_press_enter_to_search_for'			 => __( 'Press <kbd class="tainacan-kbd">ENTER</kbd> to search for', 'tainacan' ),
 	'instruction_type_geocoordinate'				 => __( 'Type a geo coordinate in the form of lat,lng', 'tainacan' ),
 	'instruction_click_to_add_a_point'				 => __( 'Drag to reposition or click to insert a marker', 'tainacan' ),
 	'instruction_select_geocoordinate_metadatum'	 => __( 'Select a geocoordinate metadatum', 'tainacan' ),
@@ -878,18 +892,21 @@ return apply_filters( 'tainacan-i18n', [
 	'info_no_items_draft'			                 => __( 'No draft items found.', 'tainacan' ),
 	'info_no_items_trash'			                 => __( 'No items found on trash.', 'tainacan' ),
 	'info_no_items_pending'			                 => __( 'No pending items found.', 'tainacan' ),
+	'info_no_items_found_with_status'			     => __( 'No items found with this status.', 'tainacan' ),
 
 	'info_no_collections_publish'			         => __( 'No public collections found.', 'tainacan' ),
 	'info_no_collections_private'			         => __( 'No private collections found.', 'tainacan' ),
 	'info_no_collections_draft'			             => __( 'No draft collections found.', 'tainacan' ),
 	'info_no_collections_pending'			         => __( 'No pending collections found.', 'tainacan' ),
 	'info_no_collections_trash'			             => __( 'No collections found on trash.', 'tainacan' ),
+	'info_no_collections_found_with_status'			 => __( 'No collections found with this status.', 'tainacan' ),
 
 	'info_no_taxonomies_publish'			         => __( 'No public taxonomies found.', 'tainacan' ),
 	'info_no_taxonomies_private'			         => __( 'No private taxonomies found.', 'tainacan' ),
 	'info_no_taxonomies_draft'			             => __( 'No draft taxonomies found.', 'tainacan' ),
 	'info_no_taxonomies_pending'			         => __( 'No pending taxonomies found.', 'tainacan' ),
 	'info_no_taxonomies_trash'			             => __( 'No taxonomies found on trash.', 'tainacan' ),
+	'info_no_taxonomies_found_with_status'			 => __( 'No taxonomies found with this status.', 'tainacan' ),
 
 	'info_item_publish'			         			=> __( 'This item is published as public and will be visible to any visitor on the website, as long as its collection is also public.', 'tainacan' ),
 	'info_item_private'			         			=> __( 'This item is published as private and will be visible only for editors with the required capabilities.', 'tainacan' ),
@@ -925,9 +942,9 @@ return apply_filters( 'tainacan-i18n', [
 	'info_warning_collection_trash_%s'               => __( 'Do you really want to trash the collection "%s"?', 'tainacan' ),
 	/* translators: %s is the filter name */
 	'info_warning_filter_delete_%s'                  => __( 'Do you really want to delete the filter "%s"?', 'tainacan' ),
-	'info_warning_item_delete'                       => __( 'Do you really want to permanently delete this item?', 'tainacan' ),
+	'info_warning_item_delete'                       => __( 'Do you really want to permanently delete this item? The attachments will also be deleted.', 'tainacan' ),
 	/* translators: %s is the item name */
-	'info_warning_item_delete_%s'                    => __( 'Do you really want to permanently delete the item "%s"?', 'tainacan' ),
+	'info_warning_item_delete_%s'                    => __( 'Do you really want to permanently delete the item "%s"? The attachments will also be deleted.', 'tainacan' ),
 	'info_warning_remove_item_from_trash'            => __( 'Do you really want to remove this item from trash?', 'tainacan' ),
 	'info_warning_item_trash'                        => __( 'Do you really want to trash this item?', 'tainacan' ),
 	/* translators: %s is the item name */
@@ -969,6 +986,7 @@ return apply_filters( 'tainacan-i18n', [
 	/* translators: %1$s is the page number, %2$s is the first item number, %3$s is the last item number, %4$s is the total count. Used in exposer modal labels. */
 	'info_page_items_range'                          => __( 'Page %1$s (items %2$s to %3$s of %4$s)', 'tainacan' ),
 	'info_warning_remove_from_trash_first'           => __( 'Remove this item from trash first', 'tainacan' ),
+	'info_warning_remove_from_collection_trash_first' => __( 'Remove the collection from trash first', 'tainacan' ),
 	/* translators: This is displayed before sentences like "Showing items 2 to 8 of 12 */
 	'info_of'                                        => __( ' of ', 'tainacan' ),
 	'info_created_by'                                => __( 'Created by: ', 'tainacan' ),
@@ -983,6 +1001,7 @@ return apply_filters( 'tainacan-i18n', [
 	'info_warning_taxonomy_not_saved'                => __( 'Are you sure? The taxonomy is not saved, changes will be lost.', 'tainacan' ),
 	'info_warning_terms_not_saved'                   => __( 'Are you sure? There are terms not saved, changes will be lost.', 'tainacan' ),
 	'info_no_activities'                             => __( 'No activities found.', 'tainacan' ),
+	'info_no_activities_found_with_filter'           => __( 'No activities found with the current filters.', 'tainacan' ),
 	'info_logs_before'                               => __( 'Before', 'tainacan' ),
 	'info_logs_after'                                => __( 'After', 'tainacan' ),
 	'info_there_is_no_metadatum'                     => __( 'There is no metadata here yet.', 'tainacan' ),
@@ -1059,6 +1078,7 @@ return apply_filters( 'tainacan-i18n', [
   	'info_warning_process_cancelled'                 => __( 'Are you sure? This process will be cancelled.', 'tainacan' ),
 	'info_empty'                                     => __( 'empty', 'tainacan' ),
 	'info_url_copied'	         	    	    	 => __( 'URL link copied', 'tainacan' ),
+	'info_copy_to_clipboard_failed'			 		 => __( 'Copy to clipboard failed.', 'tainacan' ),
 	'info_other_options'				 			 => __( 'Other options: ', 'tainacan'),
 	'info_other_item_listing_options'				 => __( 'Other items listing options: ', 'tainacan'),
 	'info_send_email'				 				 => __( 'The exporter may take a while. Check this option to receive an e-mail when the process is done. You can also check the process status visiting the', 'tainacan'),
@@ -1143,7 +1163,7 @@ return apply_filters( 'tainacan-i18n', [
 	'info_empty_geocoordinate_metadata_list'		 => __( 'No geocoordinate metadata was found. Try enabling it in the "displayed metadata" dropdown.', 'tainacan' ),
 	'info_non_located_item'							 => __( 'This item does not have any location based on this metadata.', 'tainacan' ),
 	'info_metadata_section_hidden_conditional'		 => __( 'Section disabled due to a conditional metadatum value.', 'tainacan' ),
-	'info_create_select_metadatum_for_conditional_section' => __( 'For configuring conditional sections, first create one select type metadatum to use its values as rules for displaing this section. The metadatum should be inside another metadatum section.', 'tainacan' ),
+	'info_create_select_metadatum_for_conditional_section' => __( 'For configuring conditional sections, first create one select type metadatum to use its values as rules for displaying this section. The metadatum should be inside another metadatum section.', 'tainacan' ),
 	'info_taxonomy_terms_list' 						 => __( 'The list of terms that are managed by this taxonomy. They will be used as values for the taxonomy metadata.', 'tainacan' ),
 	/* translators: %s is the parent term name */
 	'info_no_child_term_of_%s_found'				 => __( 'No child term of %s was found.', 'tainacan' ),
@@ -1159,7 +1179,7 @@ return apply_filters( 'tainacan-i18n', [
 	'info_autodraft_updated'						 => __( 'Autodraft updated. Please create the item to keep your changes.', 'tainacan' ),
 	'info_intersection_explainer'			 	 	 => __( 'Will show items if the selected value is:', 'tainacan' ),
 	'info_intersection_rules'				 	 	 => __( 'The value must match both rules to appear in the filter.', 'tainacan' ),
-	'info_editing_publication_authorship'			 => __( 'Warning! By changhing the item author, you may loose access to editing it. Certain types of users can only edit items that are authored by theirselves.', 'tainacan' ),		
+	'info_editing_publication_authorship'			 => __( 'Warning! By changing the item author, you may loose access to editing it. Certain types of users can only edit items that are authored by theirselves.', 'tainacan' ),		
 	/* translators: The first string is the current author name and the second is the future author name */
 	'info_change_author_from_%s_to_%s'				 => __( 'Are you sure you want to change the authorship of this item from <em>%1$s</em> to <em>%2$s</em>?', 'tainacan' ),		
 	'info_authorship'								 => __( 'The user who is credited as creator of this item and who generally have capabilities to edit it, besides administrators.', 'tainacan' ),
@@ -1176,6 +1196,9 @@ return apply_filters( 'tainacan-i18n', [
 	'info_error_date_smaller_than_min_%s'			 => __( 'Date should be after %s.', 'tainacan' ),
 	/* translators: %s is the date */
 	'info_error_date_greater_than_max_%s'			 => __( 'Date should be before %s.', 'tainacan' ),
+	/* translators: %s is the number of selected items */
+	'info_%s_selected_items_for_bulk_edition'		 => __( '<strong>%s items selected</strong> for bulk edition.', 'tainacan'),
+	'info_define_bulk_edit_criteria'				 => __( 'Define the criteria below:', 'tainacan'),
 
 	/* Activity actions */
 	'action_update-metadata-value'	=> __( 'Item Metadata Value Updates', 'tainacan'),

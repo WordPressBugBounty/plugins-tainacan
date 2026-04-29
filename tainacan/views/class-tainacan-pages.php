@@ -109,7 +109,7 @@ abstract class Pages {
 	 * @return void
 	 */
 	function admin_enqueue_js() {}
-	
+
 	/**
 	 * admin_body_class is called from the 'admin_body_class' filter and should add the page's class to the body. 
 	 * 
@@ -265,6 +265,10 @@ abstract class Pages {
 			'api_max_items_per_page'    => $TAINACAN_API_MAX_ITEMS_PER_PAGE,
 			'wp_elasticpress'    		=> \Tainacan\Elastic_Press::get_instance()->is_active(),
 			'item_submission_captcha_site_key' => get_option("tnc_option_recaptch_site_key"),
+			'tainacan_use_deprecated_logs' => (
+				!defined('TAINACAN_USE_DEPRECATED_LOGS') || 
+				true === TAINACAN_USE_DEPRECATED_LOGS
+			),
 			'tainacan_enable_core_metadata_on_advanced_search' => (
 				!defined('TAINACAN_DISABLE_CORE_METADATA_ON_ADVANCED_SEARCH') || 
 				false === TAINACAN_DISABLE_CORE_METADATA_ON_ADVANCED_SEARCH
@@ -859,7 +863,7 @@ abstract class Pages {
 						</label>
 						<label>
 							<input type="radio" name="tainacan-fullscreen-state" value="0" <?php checked(!$is_fullscreen, true); ?>>
-							<?php esc_html_e('Show WorPress navigation', 'tainacan'); ?>
+							<?php esc_html_e('Show WordPress navigation', 'tainacan'); ?>
 						</label>
 					</fieldset>
 				</label>
@@ -877,6 +881,23 @@ abstract class Pages {
 		return $current . $extra_screen_options_html;
 	}
 
+	/**
+	 * Registers the lazy-loaded chunk for this page and sets up its translations.
+	 *
+	 * Call this from admin_enqueue_js() when the page uses tainacan-pages-common-scripts with a data-module.
+	 * The chunk path is ./{name}/js/{name}-main.js, so the built handle is tainacan-chunks-{name}-js-{name}-main.
+	 * Translation file resolution is handled by the load_script_translation_file filter in tainacan-utils.
+	 *
+	 * @param string $name The module name (e.g. 'roles', 'admin'), matching the data-module value and the folder under views/.
+	 * @return void
+	 */
+	protected function register_pages_chunk_translations( $name ) {
+		$handle = 'tainacan-chunks-' . sanitize_key( $name ) . '-js-' . sanitize_key( $name ) . '-main';
+		global $TAINACAN_BASE_URL;
+		wp_register_script( $handle, $TAINACAN_BASE_URL . '/assets/js/' . $handle . '.js', array( 'wp-i18n' ), TAINACAN_VERSION, true );
+		wp_set_script_translations( $handle, 'tainacan' );
+		wp_add_inline_script( 'wp-i18n', wp_scripts()->print_translations( $handle, false ) );
+	}
 
 }
 

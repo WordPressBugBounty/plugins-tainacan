@@ -839,7 +839,7 @@ class Theme_Helper {
 		 *     @type bool 	$start_with_filters_hidden					Loads the filters list hidden from start
 		 *     @type bool 	$filters_as_modal							Display the filters as a modal instead of a collapsible region on desktop
 		 *     @type bool 	$show_inline_view_mode_options				Display view modes as inline icon buttons instead of the dropdown
-		 *     @type bool 	$show_fullscreen_with_view_modes			Lists fullscreen viewmodes alongside with other view modes istead of separatelly
+		 *     @type bool 	$show_fullscreen_with_view_modes			Lists fullscreen viewmodes alongside with other view modes istead of separately
 		 *     @type string $default_view_mode							The default view mode
 		 *     @type bool	$is_forced_view_mode						Ignores user prefs to always render the choosen default view mode
 		 *     @type string[] $enabled_view_modes						The list os enable view modes to display
@@ -1342,11 +1342,29 @@ class Theme_Helper {
 
 					if ( array_key_exists('dublin-core', $meta_mappings) && $item_metadatum->has_value() ) {
 						$values = $item_metadatum->get_value();
-						$values = is_array($values) ? $values : [$values];
+						$multiple_values = is_array($values) ? $values : [$values];
 
-						$values = array_map(function($value) use ($meta_mappings) {
-							echo '<meta name="' . esc_attr(str_replace('dc:' , 'dc.', $meta_mappings['dublin-core'])) . '" content="' . esc_attr($value) . '" />';
-						}, $values);
+						$multiple_values = array_map(function($single_value) use ($meta_mappings) {
+
+							// If the single value is still an array, we are in a multiple compound metadata
+							if ( is_array($single_value) ) {
+								foreach ($single_value as $child_value) {
+									if ( $child_value instanceof \Tainacan\Entities\Item_Metadata_Entity ) {
+										$child_value = $child_value->get_value_as_string();
+										echo '<meta name="' . esc_attr(str_replace('dc:' , 'dc.', $meta_mappings['dublin-core'])) . '" content="' . esc_attr($child_value) . '" />';
+									} 
+								}
+							// But we might be in a single compound metadata
+							} else if ( $single_value instanceof \Tainacan\Entities\Item_Metadata_Entity ) {
+								$child_value = $single_value->get_value_as_string();
+								echo '<meta name="' . esc_attr(str_replace('dc:' , 'dc.', $meta_mappings['dublin-core'])) . '" content="' . esc_attr($child_value) . '" />';
+							 
+							// Or a single, non-compound metadata
+						    } else {
+								echo '<meta name="' . esc_attr(str_replace('dc:' , 'dc.', $meta_mappings['dublin-core'])) . '" content="' . esc_attr($single_value) . '" />';
+							}
+							
+						}, $multiple_values);
 					}
 				}
 			}
@@ -2217,7 +2235,8 @@ class Theme_Helper {
 					'nextEl' => sprintf('.swiper-navigation-next_tainacan-item-gallery-block_id-%s-main', $block_id),
 					'prevEl' => sprintf('.swiper-navigation-prev_tainacan-item-gallery-block_id-%s-main', $block_id),
 					'preloadImages' => false,
-					'lazy' => true
+					'lazy' => true,
+					'addIcons' => false,
 				)
 			) : []
 		);
@@ -2238,7 +2257,8 @@ class Theme_Helper {
 					'nextEl' => sprintf('.swiper-navigation-next_tainacan-item-gallery-block_id-%s-thumbs', $block_id),
 					'prevEl' => sprintf('.swiper-navigation-prev_tainacan-item-gallery-block_id-%s-thumbs', $block_id),
 					'preloadImages' => false,
-					'lazy' => true
+					'lazy' => true,
+					'addIcons' => false,
 				)
 			) : []
 		);
@@ -2258,6 +2278,8 @@ class Theme_Helper {
 				'swiper_main_options' => $swiper_main_options,
 				'swiper_thumbs_options' => $swiper_thumbs_options,
 				'swiper_arrows_as_svg' => $show_arrows_as_svg,
+				'disable_main_carousel' => !is_array($media_items_main) || count($media_items_main) <= 1,
+				'disable_thumbs_carousel' => !is_array($media_items_thumbnails) || count($media_items_thumbnails) <= 1,
 				'disable_lightbox' => !$open_lightbox_on_click,
 				'hide_media_name' => $hide_file_name_lightbox,
 				'hide_media_caption' => $hide_file_caption_lightbox,
@@ -2544,7 +2566,8 @@ class Theme_Helper {
 					'nextEl' => sprintf('.swiper-navigation-next_tainacan-items-gallery-block_id-%s-main', $block_id),
 					'prevEl' => sprintf('.swiper-navigation-prev_tainacan-items-gallery-block_id-%s-main', $block_id),
 					'preloadImages' => false,
-					'lazy' => true
+					'lazy' => true,
+					'addIcons' => false,
 				)
 			) : []
 		);
@@ -2565,7 +2588,8 @@ class Theme_Helper {
 					'nextEl' => sprintf('.swiper-navigation-next_tainacan-items-gallery-block_id-%s-thumbs', $block_id),
 					'prevEl' => sprintf('.swiper-navigation-prev_tainacan-items-gallery-block_id-%s-thumbs', $block_id),
 					'preloadImages' => false,
-					'lazy' => true
+					'lazy' => true,
+					'addIcons' => false,
 				)
 			) : []
 		);
@@ -2585,6 +2609,8 @@ class Theme_Helper {
 				'swiper_main_options' => $swiper_main_options,
 				'swiper_thumbs_options' => $swiper_thumbs_options,
 				'swiper_arrows_as_svg' => $show_arrows_as_svg,
+				'disable_main_carousel' => !is_array($media_items_main) || count($media_items_main) <= 1,
+				'disable_thumbs_carousel' => !is_array($media_items_thumbnails) || count($media_items_thumbnails) <= 1,
 				'disable_lightbox' => !$open_lightbox_on_click,
 				'hide_media_name' => $hide_item_title_lightbox,
 				'hide_media_caption' => $hide_item_link_lightbox,
@@ -2873,7 +2899,7 @@ class Theme_Helper {
 			'hide_description' 				=> true,
 			'hide_empty' 					=> true,
 			'empty_metadata_list_message' 	=> '',
-			'before' 						=> '<section class="metadata-section-slug-$slug" id="$id">',
+			'before' 						=> '<section class="metadata-section-slug-$slug" id="metadata-section-$id">',
 			'after' 						=> '</section>',
 			'before_name' 					=> '<h2 id="metadata-section-$slug">',
 			'after_name' 					=> '</h2>',
@@ -2991,7 +3017,7 @@ class Theme_Helper {
 			'hide_description' 				=> true,
 			'hide_empty' 					=> true,
 			'empty_metadata_list_message' 	=> '',
-			'before' 						=> '<section class="metadata-section-slug-$slug" id="$id">',
+			'before' 						=> '<section class="metadata-section-slug-$slug" id="metadata-section-$id">',
 			'after' 						=> '</section>',
 			'before_name' 					=> '<h2 id="metadata-section-$slug">',
 			'after_name' 					=> '</h2>',
@@ -3293,7 +3319,7 @@ class Theme_Helper {
 	}
 
 	/**
-	 * Registers Tainacan oficial View Modes and their placeholders
+	 * Registers Tainacan official View Modes and their placeholders
 	 */
 	function register_tainacan_oficial_view_modes() {
 
