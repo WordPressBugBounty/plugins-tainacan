@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunktainacan=self.webpackChunktainacan||[]).push([[23,2404],{10023(a,e,c){c.r(e);var n=c(45195),s=c(10128);c(60859);const t=(0,c(66262).A)(s.A,[["render",n.X],["__scopeId","data-v-cb7eae72"]]);c.d(e,["default",0,t])}}]);
