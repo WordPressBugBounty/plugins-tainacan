@@ -1,1 +1,1 @@
-{"version":3,"sourceRoot":"","sources":[],"names":[],"mappings":"","file":"tainacan-gutenberg-block-item-metadatum.css"}
+{"version":3,"sourceRoot":"","sources":["../../views/gutenberg-blocks/blocks/item-metadatum/style.scss"],"names":[],"mappings":"AAAA,mDACI,eACA,kBACA,yBACA","file":"tainacan-gutenberg-block-item-metadatum.css"}

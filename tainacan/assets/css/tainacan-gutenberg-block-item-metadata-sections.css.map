@@ -1,1 +1,1 @@
-{"version":3,"sourceRoot":"","sources":[],"names":[],"mappings":"","file":"tainacan-gutenberg-block-item-metadata-sections.css"}
+{"version":3,"sourceRoot":"","sources":["../../views/gutenberg-blocks/blocks/item-metadata-sections/style.scss"],"names":[],"mappings":"AAAA,0DACI,eACA,kBACA,yBACA","file":"tainacan-gutenberg-block-item-metadata-sections.css"}
